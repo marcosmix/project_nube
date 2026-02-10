@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Developer extends Model
+{
+    /** @use HasFactory<\Database\Factories\DeveloperFactory> */
+    use HasFactory;
+
+    protected $fillable = [
+        'contact_id',
+        'skins',
+        'skills',
+        'github_username',
+        'github_url',
+        'linkedin_url',
+        'alias',
+        'cbu',
+        'profile_photo',
+        'phrase',
+        'score',
+        'level',
+        'status',
+        'availability',
+        'notes',
+    ];
+
+    protected $casts = [
+        'skins' => 'array',
+        'skills' => 'array',
+        'score' => 'integer',
+    ];
+
+    public const STATUSES = [
+        'active' => 'Activo',
+        'inactive' => 'Inactivo',
+    ];
+
+    public const AVAILABILITIES = [
+        'full_time' => 'Tiempo completo',
+        'freelance' => 'Freelance',
+    ];
+
+    public const LEVELS = [
+        'junior' => 'Junior',
+        'semi_senior' => 'Semi Senior',
+        'senior' => 'Senior',
+        'lead' => 'Lead',
+    ];
+
+    public function contact(){
+        return $this->belongsTo(Contact::class);
+    }
+
+    public function getStatusLabelAttribute(): string{
+        return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    public function getAvailabilityLabelAttribute(): string{
+        return self::AVAILABILITIES[$this->availability] ?? $this->availability;
+    }
+
+    public function getLevelLabelAttribute(): string{
+        return self::LEVELS[$this->level] ?? $this->level;
+    }
+
+    public function getAvatarUrlAttribute(): ?string{
+        return $this->profile_photo ? asset('storage/' . $this->profile_photo) : null;
+    }
+}
