@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Developers\DevelopersIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -20,9 +21,8 @@ Route::view('/clientes', 'clientes.index')
     ->middleware(['auth', 'verified'])
     ->name('clientes.index');
 
-Route::view('/developers', 'developers.index')
+Route::get('/developers', DevelopersIndex::class)
     ->middleware(['auth', 'verified'])
     ->name('developers.index');
-
 
 require __DIR__.'/auth.php';

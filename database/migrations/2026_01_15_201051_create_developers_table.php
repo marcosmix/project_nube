@@ -27,11 +27,11 @@ return new class extends Migration {
             $table->string('linkedin_url')->nullable();
 
             $table->string('alias')->nullable();
-            $table->string('cbu')->nullable();  // ojo: validar formato, pero guardalo como string
-            $table->string('profile_photo')->nullable();  // storage path
+            $table->string('cbu')->nullable();
+            $table->string('profile_photo')->nullable();
             $table->string('phrase')->nullable();
 
-            $table->unsignedTinyInteger('score')->nullable();  // 1..10
+            $table->unsignedTinyInteger('score')->nullable();
             $table->enum('level', ['junior', 'semi_senior', 'senior', 'lead'])->default('junior');
 
             $table->enum('status', ['active', 'inactive'])->default('active');

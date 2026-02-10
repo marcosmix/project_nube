@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Contact extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -27,12 +28,13 @@ class Contact extends Model
         return $this->hasOne(Client::class);
     }
 
+    public function developer(): HasOne
+    {
+        return $this->hasOne(Developer::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
     }
-    public function developer()
-{
-    return $this->hasOne(Developer::class);
-}
 }
