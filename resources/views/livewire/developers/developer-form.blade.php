@@ -67,7 +67,7 @@
                                         @foreach($this->filteredSuggestions as $suggestion)
                                             <button
                                                 type="button"
-                                                wire:click='addSkill(@js($suggestion))'
+                                                wire:click="addSkill({{ \Illuminate\Support\Js::from($suggestion) }})"
                                                 class="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
                                             >
                                                 {{ $suggestion }}
@@ -80,7 +80,7 @@
                                     @forelse($skills as $skill)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700">
                                             {{ $skill }}
-                                            <button type="button" wire:click='removeSkill(@js($skill))' class="font-bold">×</button>
+                                            <button type="button" wire:click="removeSkill({{ \Illuminate\Support\Js::from($skill) }})" class="font-bold">×</button>
                                         </span>
                                     @empty
                                         <span class="text-xs text-gray-500">Todavía no agregaste skills.</span>
