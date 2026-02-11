@@ -11,7 +11,7 @@
                 
                 <x-app-layout>
                     <x-slot name="header">Developers</x-slot>
-                    <livewire:developers.index />
+                    <livewire:developers.developers-index />
                 </x-app-layout>
                 
             </div>

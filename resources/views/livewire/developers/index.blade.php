@@ -85,7 +85,7 @@
                                         @click.outside="open=false"
                                         class="absolute right-0 z-10 mt-2 w-44 overflow-hidden rounded-xl border bg-white shadow-lg"
                                     >
-                                        <button wire:click="edit({{ $dev->id }})" @click="open=false" class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50">✏️ Editar</button>
+                                        <button wire:click="openEdit({{ $dev->id }})" @click="open=false" class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50">✏️ Editar</button>
                                         <button
                                             wire:click="delete({{ $dev->id }})"
                                             @click="open=false"
@@ -172,5 +172,5 @@
         </div>
     </div>
 
-    <livewire:developers.developer-form />
+    @include('livewire.developers.partials.developer-form')
 </x-app-layout>
