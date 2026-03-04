@@ -131,14 +131,23 @@
 
                             {{-- Client --}}
                             <div class="mt-4 rounded-lg bg-gray-50 p-3">
+                                @php
+                                    $client = $project->client;
+                                    $contact = $client?->contact;
+                                    $clientName = $client?->organization_name ?? 'Cliente no asignado';
+                                    $clientInitial = mb_substr($clientName, 0, 1);
+                                    $contactName = $contact
+                                        ? trim("{$contact->first_name} {$contact->last_name}")
+                                        : 'Sin contacto registrado';
+                                @endphp
                                 <div class="flex items-center gap-3">
                                     <div class="flex size-8 items-center justify-center rounded-full bg-blue-100 text-sm text-blue-600">
-                                        {{ mb_substr($project->client->organization_name, 0, 1) }}
+                                        {{ $clientInitial }}
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-900">{{ $project->client->organization_name }}</div>
+                                        <div class="text-sm text-gray-900">{{ $clientName }}</div>
                                         <div class="text-xs text-gray-500">
-                                            {{ $project->client->contact->first_name }} {{ $project->client->contact->last_name }}
+                                            {{ $contactName }}
                                         </div>
                                     </div>
                                 </div>

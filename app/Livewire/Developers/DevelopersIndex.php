@@ -195,6 +195,13 @@ class DevelopersIndex extends Component
             return;
         }
 
+        if (! $this->isAllowedSkill($value)) {
+            $this->addError('skills', 'Solo podés agregar skills permitidas de la lista.');
+
+            return;
+        }
+
+        $this->resetErrorBag('skills');
         $this->skills[] = $value;
         $this->skills = $this->sanitizeArrayValues($this->skills);
         $this->newSkill = '';
@@ -209,6 +216,16 @@ class DevelopersIndex extends Component
     }
 
     #[Computed]
+    public function canAddTypedSkill(): bool
+    {
+        $value = $this->normalizeItem($this->newSkill);
+
+        return $value !== ''
+            && $this->isAllowedSkill($value)
+            && ! in_array($value, $this->skills, true);
+    }
+
+    #[Computed]
     public function filteredSuggestions(): array
     {
         $needle = mb_strtolower(trim($this->newSkill));
@@ -217,10 +234,7 @@ class DevelopersIndex extends Component
             return [];
         }
 
-        return collect(config('developers.skills', []))
-            ->map(fn (string $item) => $this->normalizeItem($item))
-            ->filter(fn (string $item) => $item !== '')
-            ->unique()
+        return collect($this->allowedSkills())
             ->reject(fn (string $item) => in_array($item, $this->skills, true))
             ->filter(fn (string $item) => str_contains(mb_strtolower($item), $needle))
             ->take(8)
@@ -384,6 +398,21 @@ class DevelopersIndex extends Component
         return preg_replace('/\s+/', ' ', trim($value)) ?? '';
     }
 
+    private function isAllowedSkill(string $value): bool
+    {
+        return in_array($value, $this->allowedSkills(), true);
+    }
+
+    private function allowedSkills(): array
+    {
+        return collect(config('developers.skills', []))
+            ->map(fn (string $item) => $this->normalizeItem($item))
+            ->filter(fn (string $item) => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     private function nullableTrim(?string $value): ?string
     {
         if ($value === null) {
@@ -436,10 +465,29 @@ class DevelopersIndex extends Component
         return $matches[1] ?? null;
     }
 
+    private function availableDevelopersBySkill(): array
+    {
+        $availableDevelopers = Developer::query()
+            ->whereDoesntHave('projects')
+            ->get(['skills']);
+
+        return $availableDevelopers
+            ->flatMap(function (Developer $developer) {
+                return collect($developer->skills ?? [])
+                    ->map(fn (string $skill) => $this->normalizeItem($skill))
+                    ->filter(fn (string $skill) => $skill !== '')
+                    ->unique();
+            })
+            ->countBy()
+            ->sortDesc()
+            ->all();
+    }
+
     public function render()
     {
         $developers = Developer::query()
-            ->with('contact')
+            ->with(['contact', 'projects:id,name'])
+            ->withCount('projects')
             ->when($this->search !== '', function ($query) {
                 $term = '%' . trim($this->search) . '%';
 
@@ -468,6 +516,7 @@ class DevelopersIndex extends Component
             'activos' => Developer::where('status', 'active')->count(),
             'fullTime' => Developer::where('availability', 'full_time')->count(),
             'freelance' => Developer::where('availability', 'freelance')->count(),
+            'availableBySkill' => $this->availableDevelopersBySkill(),
             'statuses' => Developer::STATUSES,
             'availabilities' => Developer::AVAILABILITIES,
             'levels' => Developer::LEVELS,

@@ -59,7 +59,7 @@
                                         class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                         placeholder="Escribí una skill"
                                     >
-                                    <button type="button" wire:click="addSkill" class="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700">+</button>
+                                    <button type="button" wire:click="addSkill" @disabled(! $this->canAddTypedSkill) class="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300">+</button>
                                 </div>
 
                                 @if($this->filteredSuggestions)
@@ -75,6 +75,8 @@
                                         @endforeach
                                     </div>
                                 @endif
+
+                                <p class="mt-2 text-xs text-gray-500">Solo podés elegir skills permitidas desde las sugerencias.</p>
 
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @forelse($skills as $skill)
