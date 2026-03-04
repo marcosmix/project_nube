@@ -465,10 +465,29 @@ class DevelopersIndex extends Component
         return $matches[1] ?? null;
     }
 
+    private function availableDevelopersBySkill(): array
+    {
+        $availableDevelopers = Developer::query()
+            ->whereDoesntHave('projects')
+            ->get(['skills']);
+
+        return $availableDevelopers
+            ->flatMap(function (Developer $developer) {
+                return collect($developer->skills ?? [])
+                    ->map(fn (string $skill) => $this->normalizeItem($skill))
+                    ->filter(fn (string $skill) => $skill !== '')
+                    ->unique();
+            })
+            ->countBy()
+            ->sortDesc()
+            ->all();
+    }
+
     public function render()
     {
         $developers = Developer::query()
-            ->with('contact')
+            ->with(['contact', 'projects:id,name'])
+            ->withCount('projects')
             ->when($this->search !== '', function ($query) {
                 $term = '%' . trim($this->search) . '%';
 
@@ -497,6 +516,7 @@ class DevelopersIndex extends Component
             'activos' => Developer::where('status', 'active')->count(),
             'fullTime' => Developer::where('availability', 'full_time')->count(),
             'freelance' => Developer::where('availability', 'freelance')->count(),
+            'availableBySkill' => $this->availableDevelopersBySkill(),
             'statuses' => Developer::STATUSES,
             'availabilities' => Developer::AVAILABILITIES,
             'levels' => Developer::LEVELS,

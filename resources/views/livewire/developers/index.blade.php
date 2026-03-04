@@ -64,7 +64,16 @@
 
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     @forelse($developers as $dev)
-                        <div class="rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg">
+                        @php
+                            $projectCount = (int) ($dev->projects_count ?? 0);
+                            $borderClass = match (true) {
+                                $projectCount === 0 => 'border-green-400',
+                                $projectCount === 2 => 'border-yellow-400',
+                                $projectCount >= 3 => 'border-red-400',
+                                default => 'border-gray-200',
+                            };
+                        @endphp
+                        <div class="rounded-2xl border-2 {{ $borderClass }} bg-white p-6 transition-shadow hover:shadow-lg">
                             <div class="mb-4 flex items-start justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="flex size-16 items-center justify-center overflow-hidden rounded-full bg-gray-100">
@@ -99,7 +108,13 @@
                             </div>
 
                             <h3 class="mb-1 text-lg text-gray-900">{{ $dev->contact->first_name }} {{ $dev->contact->last_name }}</h3>
-                            <p class="mb-3 text-sm text-gray-600">{{ $dev->contact->job_title ?? $dev->level_label }}</p>
+                            <p class="text-sm text-gray-600">{{ $dev->contact->job_title ?? $dev->level_label }}</p>
+                            <p class="mb-3 mt-1 text-xs text-gray-500">
+                                Proyectos activos: {{ $projectCount }}
+                                @if($projectCount > 0)
+                                    · {{ $dev->projects->pluck('name')->join(', ') }}
+                                @endif
+                            </p>
 
                             <div class="mb-4 flex gap-2">
                                 <span class="rounded px-2 py-1 text-xs {{ $dev->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' }}">
@@ -151,6 +166,23 @@
                 </div>
 
                 <div>{{ $developers->links() }}</div>
+
+                <div class="rounded-2xl border bg-white p-4">
+                    <div class="mb-3 flex items-center justify-between">
+                        <p class="text-sm text-gray-600">Disponibles por skill (sin proyectos)</p>
+                        <span class="text-xs text-gray-500">General</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        @forelse($availableBySkill as $skill => $count)
+                            <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                                {{ $skill }}: {{ $count }}
+                            </span>
+                        @empty
+                            <span class="text-xs text-gray-500">No hay developers disponibles sin proyectos.</span>
+                        @endforelse
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div class="rounded-2xl border bg-white p-4">
