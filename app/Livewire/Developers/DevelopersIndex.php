@@ -195,6 +195,13 @@ class DevelopersIndex extends Component
             return;
         }
 
+        if (! $this->isAllowedSkill($value)) {
+            $this->addError('skills', 'Solo podés agregar skills permitidas de la lista.');
+
+            return;
+        }
+
+        $this->resetErrorBag('skills');
         $this->skills[] = $value;
         $this->skills = $this->sanitizeArrayValues($this->skills);
         $this->newSkill = '';
@@ -209,6 +216,16 @@ class DevelopersIndex extends Component
     }
 
     #[Computed]
+    public function canAddTypedSkill(): bool
+    {
+        $value = $this->normalizeItem($this->newSkill);
+
+        return $value !== ''
+            && $this->isAllowedSkill($value)
+            && ! in_array($value, $this->skills, true);
+    }
+
+    #[Computed]
     public function filteredSuggestions(): array
     {
         $needle = mb_strtolower(trim($this->newSkill));
@@ -217,10 +234,7 @@ class DevelopersIndex extends Component
             return [];
         }
 
-        return collect(config('developers.skills', []))
-            ->map(fn (string $item) => $this->normalizeItem($item))
-            ->filter(fn (string $item) => $item !== '')
-            ->unique()
+        return collect($this->allowedSkills())
             ->reject(fn (string $item) => in_array($item, $this->skills, true))
             ->filter(fn (string $item) => str_contains(mb_strtolower($item), $needle))
             ->take(8)
@@ -382,6 +396,21 @@ class DevelopersIndex extends Component
     private function normalizeItem(string $value): string
     {
         return preg_replace('/\s+/', ' ', trim($value)) ?? '';
+    }
+
+    private function isAllowedSkill(string $value): bool
+    {
+        return in_array($value, $this->allowedSkills(), true);
+    }
+
+    private function allowedSkills(): array
+    {
+        return collect(config('developers.skills', []))
+            ->map(fn (string $item) => $this->normalizeItem($item))
+            ->filter(fn (string $item) => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function nullableTrim(?string $value): ?string
