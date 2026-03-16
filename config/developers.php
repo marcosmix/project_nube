@@ -26,6 +26,14 @@ return [
         'AWS',
         'Cloudflare',
         'Nginx',
+        'DevOps',
+        'Figma',
+        'UX',
+        'UI',
+        'Prototipado IA',
+        'Diseño grafico',
+        'UI saas',
+    
     ],
     'skins' => [
         'Frontend',
@@ -35,6 +43,6 @@ return [
         'DevOps',
         'QA',
         'Data',
-        'AI',
+        'AI'
     ],
 ];
