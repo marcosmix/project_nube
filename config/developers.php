@@ -27,6 +27,12 @@ return [
         'Cloudflare',
         'Nginx',
         'DevOps',
+        'Figma',
+        'UX',
+        'UI',
+        'Prototipado IA',
+        'Diseño grafico',
+        'UI saas',
     
     ],
     'skins' => [
