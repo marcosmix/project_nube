@@ -1,14 +1,5 @@
 <div class="py-8">
     <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-       <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">
-            Developers
-        </h2>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
             <div class="space-y-6">
                 <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
@@ -203,12 +194,9 @@
                     </div>
                 </div>
             </div>
+
+            @include('livewire.developers.partials.developer-form')
         </div>
     </div>
-
-</x-app-layout>
-    </div>
-
-    @include('livewire.developers.partials.developer-form')
 </div>
 
