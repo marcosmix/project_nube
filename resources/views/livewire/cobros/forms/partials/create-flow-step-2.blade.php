@@ -1,21 +1,21 @@
 <div class="space-y-8">
     <div>
         <h2 class="text-xl font-semibold text-slate-950">Paso 2. Configuración financiera del flujo</h2>
-        <p class="mt-2 text-sm text-slate-500">
+        <p class="mt-2 text-sm text-slate-600">
             El monto total se toma del proyecto en Venta Cerrada y las cuotas se recalculan en vivo.
         </p>
     </div>
 
     @if (! $selectedProject)
-        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-sm text-slate-500">
+        <div class="rounded-2xl border border-dashed border-slate-400 bg-slate-100 px-5 py-10 text-sm text-slate-600">
             Primero seleccioná un cliente y un proyecto en el paso 1.
         </div>
     @else
         <div class="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <div class="space-y-6">
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div class="rounded-2xl border border-slate-300 bg-slate-100 p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-900">{{ $selectedProject->name }}</div>
-                    <div class="mt-1 text-sm text-slate-500">{{ $selectedProject->status->label() }}</div>
+                    <div class="mt-1 text-sm text-slate-600">{{ $selectedProject->status->label() }}</div>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
@@ -25,7 +25,7 @@
                             type="text"
                             value="${{ number_format((float) $total_amount, 2, ',', '.') }}"
                             readonly
-                            class="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700 shadow-sm"
+                            class="w-full rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-800 shadow-sm"
                         >
                         @error('total_amount')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -37,7 +37,7 @@
                         <input
                             type="date"
                             wire:model.live="start_date"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                         >
                         @error('start_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -48,7 +48,7 @@
                         <label class="mb-2 block text-sm font-medium text-slate-700">Frecuencia</label>
                         <select
                             wire:model.live="frequency"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                         >
                             @foreach ($frequencies as $frequency)
                                 <option value="{{ $frequency->value }}">{{ $frequency->label() }}</option>
@@ -65,7 +65,7 @@
                             type="number"
                             min="0"
                             wire:model.live="grace_days"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                         >
                         @error('grace_days')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -79,7 +79,7 @@
                             min="1"
                             max="240"
                             wire:model.live="installments_count"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                         >
                         @error('installments_count')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -91,7 +91,7 @@
                         <textarea
                             wire:model.live="notes"
                             rows="4"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                             placeholder="Notas internas del flujo..."
                         ></textarea>
                         @error('notes')
@@ -102,7 +102,7 @@
             </div>
 
             <div class="space-y-5">
-                <div class="rounded-2xl border px-5 py-4 {{ $this->installmentSummaryTone }}">
+                <div class="rounded-2xl border px-5 py-4 shadow-sm {{ $this->installmentSummaryTone }}">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <div class="text-xs font-medium uppercase tracking-[0.18em]">Control de cuotas</div>
@@ -133,17 +133,17 @@
                 </div>
 
                 @error('installmentRows')
-                    <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
                         {{ $message }}
                     </div>
                 @enderror
 
                 <div class="space-y-3">
                     @foreach ($installmentRows as $index => $row)
-                        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
                             <div class="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)_190px] md:items-end">
                                 <div>
-                                    <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Cuota</div>
+                                    <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Cuota</div>
                                     <div class="mt-2 text-lg font-semibold text-slate-900">#{{ $row['number'] }}</div>
                                 </div>
 
@@ -154,7 +154,7 @@
                                         step="0.01"
                                         min="0"
                                         wire:model.live="installmentRows.{{ $index }}.amount"
-                                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                                     >
                                     @error("installmentRows.$index.amount")
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -166,7 +166,7 @@
                                     <input
                                         type="date"
                                         wire:model.live="installmentRows.{{ $index }}.due_date"
-                                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
                                     >
                                     @error("installmentRows.$index.due_date")
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

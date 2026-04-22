@@ -1,14 +1,14 @@
 <div class="space-y-8">
     <div>
         <h2 class="text-xl font-semibold text-slate-950">Paso 1. Selección de cliente y proyecto</h2>
-        <p class="mt-2 text-sm text-slate-500">
+        <p class="mt-2 text-sm text-slate-600">
             Elegí primero el cliente y después uno de sus proyectos. Los proyectos no elegibles siguen visibles con su motivo.
         </p>
     </div>
 
     <div class="max-w-xl">
         <label class="mb-2 block text-sm font-medium text-slate-700">Cliente</label>
-        <select wire:model.live="client_id" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+        <select wire:model.live="client_id" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70">
             <option value="">Seleccioná un cliente</option>
             @foreach ($clients as $client)
                 <option value="{{ $client->id }}">
@@ -22,10 +22,10 @@
     </div>
 
     @if ($selectedClient)
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="rounded-2xl border border-slate-300 bg-slate-100 p-4 shadow-sm">
             <div class="text-sm font-medium text-slate-900">{{ $selectedClient->organization_name }}</div>
-            <div class="mt-1 text-sm text-slate-500">
-                {{ $selectedClient->contact?->full_name ?: 'Sin contacto' }}
+            <div class="mt-1 text-sm text-slate-600">
+                {{ $selectedClient->contact?->fullName ?: 'Sin contacto' }}
                 @if ($selectedClient->contact?->email)
                     <span class="px-2 text-slate-300">•</span>{{ $selectedClient->contact->email }}
                 @endif
@@ -34,7 +34,7 @@
 
         <div class="space-y-4">
             <div>
-                <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Proyectos del cliente</h3>
+                <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-600">Proyectos del cliente</h3>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -48,20 +48,20 @@
                         type="button"
                         wire:click="selectProject({{ $project->id }})"
                         @disabled($disabledReason !== null)
-                        class="rounded-2xl border p-5 text-left transition {{ $isSelected ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : ($disabledReason ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm') }}"
+                        class="rounded-2xl border p-5 text-left shadow-sm transition focus:outline-none focus:ring-4 focus:ring-slate-200/70 {{ $isSelected ? 'border-slate-900 bg-slate-900 text-white' : ($disabledReason ? 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 opacity-100' : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50') }}"
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <div class="text-lg font-semibold tracking-tight {{ $isSelected ? 'text-white' : 'text-slate-900' }}">
                                     {{ $project->name }}
                                 </div>
-                                <div class="mt-1 text-sm {{ $isSelected ? 'text-slate-300' : 'text-slate-500' }}">
+                                <div class="mt-1 text-sm {{ $isSelected ? 'text-slate-300' : 'text-slate-600' }}">
                                     {{ $project->status->label() }}
                                 </div>
                             </div>
 
                             @if ($disabledReason)
-                                <span class="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                <span class="inline-flex rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
                                     {{ $disabledReason }}
                                 </span>
                             @elseif ($isSelected)
@@ -69,16 +69,16 @@
                                     Seleccionado
                                 </span>
                             @else
-                                <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                <span class="inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
                                     Disponible
                                 </span>
                             @endif
                         </div>
 
                         <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                            <div class="rounded-xl {{ $isSelected ? 'bg-white/10' : 'bg-slate-50' }} p-3">
-                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-400' }}">Monto del proyecto</div>
-                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : 'text-slate-900' }}">
+                            <div class="rounded-xl border {{ $isSelected ? 'border-white/10 bg-white/10' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
+                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-500' }}">Monto del proyecto</div>
+                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
                                     @if ($project->total_cost)
                                         ${{ number_format((float) $project->total_cost, 2, ',', '.') }}
                                     @else
@@ -86,16 +86,16 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="rounded-xl {{ $isSelected ? 'bg-white/10' : 'bg-slate-50' }} p-3">
-                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-400' }}">Flujos abiertos</div>
-                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : 'text-slate-900' }}">
+                            <div class="rounded-xl border {{ $isSelected ? 'border-white/10 bg-white/10' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
+                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-500' }}">Flujos abiertos</div>
+                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
                                     {{ $project->paymentFlows->filter(fn ($flow) => in_array($flow->status->value, ['draft', 'active'], true))->count() }}
                                 </div>
                             </div>
                         </div>
                     </button>
                 @empty
-                    <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-sm text-slate-500">
+                    <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-slate-400 bg-slate-100 px-5 py-8 text-sm text-slate-600">
                         Este cliente no tiene proyectos asociados.
                     </div>
                 @endforelse
