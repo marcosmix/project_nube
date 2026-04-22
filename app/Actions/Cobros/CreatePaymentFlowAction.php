@@ -24,7 +24,10 @@ class CreatePaymentFlowAction
      *     start_date:string|\DateTimeInterface,
      *     grace_days?:int,
      *     notes?:string|null,
-     *     status?:string
+     *     status?:string,
+     *     auto_send_enabled?:bool,
+     *     auto_send_email?:string|null,
+     *     custom_installments?:array<int, array{amount:numeric, due_date:string|\DateTimeInterface}>
      * }  $data
      */
     public function execute(Project $project, array $data, ?User $user = null): PaymentFlow
@@ -44,10 +47,12 @@ class CreatePaymentFlowAction
                 'grace_days' => $data['grace_days'] ?? 0,
                 'notes' => $data['notes'] ?? null,
                 'status' => $status,
+                'auto_send_enabled' => (bool) ($data['auto_send_enabled'] ?? false),
+                'auto_send_email' => $data['auto_send_email'] ?? null,
                 'activated_at' => $status === PaymentFlowStatus::Active->value ? now() : null,
             ]);
 
-            $this->generateInstallmentsAction->execute($flow);
+            $this->generateInstallmentsAction->execute($flow, $data['custom_installments'] ?? null);
 
             return $flow->fresh(['installments']);
         });

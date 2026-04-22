@@ -16,6 +16,7 @@ class PaymentFlow extends Model
     protected $casts = [
         'status' => PaymentFlowStatus::class,
         'frequency' => PaymentFrequency::class,
+        'auto_send_enabled' => 'boolean',
         'total_amount' => 'decimal:2',
         'start_date' => 'date',
         'activated_at' => 'datetime',

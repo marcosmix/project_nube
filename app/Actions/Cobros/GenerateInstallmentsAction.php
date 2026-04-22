@@ -12,11 +12,15 @@ use Illuminate\Validation\ValidationException;
 
 class GenerateInstallmentsAction
 {
-    public function execute(PaymentFlow $flow): Collection
+    /**
+     * @param  array<int, array{amount:numeric, due_date:string|\DateTimeInterface}>|null  $customInstallments
+     */
+    public function execute(PaymentFlow $flow, ?array $customInstallments = null): Collection
     {
         $this->validateFlow($flow);
+        $customInstallments = $this->normalizeCustomInstallments($flow, $customInstallments);
 
-        return DB::transaction(function () use ($flow) {
+        return DB::transaction(function () use ($flow, $customInstallments) {
             $flow->loadMissing('installments.payments');
 
             // Si ya hay cuotas con pagos, no permitimos regenerar
@@ -35,13 +39,37 @@ class GenerateInstallmentsAction
                 $flow->installments()->delete();
             }
 
+            $items = collect();
+
+            if ($customInstallments !== null) {
+                foreach ($customInstallments as $index => $item) {
+                    $number = $index + 1;
+                    $amount = number_format((float) $item['amount'], 2, '.', '');
+                    $dueDate = Carbon::parse($item['due_date'])->startOfDay();
+
+                    $items->push(
+                        $flow->installments()->create([
+                            'number' => $number,
+                            'due_date' => $dueDate->toDateString(),
+                            'amount' => $amount,
+                            'paid_amount' => 0,
+                            'balance_due' => $amount,
+                            'status' => InstallmentStatus::Pending->value,
+                        ])
+                    );
+                }
+
+                return $items;
+            }
+
             $amounts = $this->splitAmountIntoInstallments(
                 (float) $flow->total_amount,
                 (int) $flow->installments_count
             );
 
-            $startDate = Carbon::parse($flow->start_date)->startOfDay();
-            $items = collect();
+            $startDate = Carbon::parse($flow->start_date)
+                ->addDays((int) $flow->grace_days)
+                ->startOfDay();
 
             foreach ($amounts as $index => $amount) {
                 $number = $index + 1;
@@ -80,6 +108,57 @@ class GenerateInstallmentsAction
                 'total_amount' => 'El monto total debe ser mayor a cero.',
             ]);
         }
+    }
+
+    /**
+     * @param  array<int, array{amount:numeric, due_date:string|\DateTimeInterface}>|null  $customInstallments
+     * @return array<int, array{amount:float, due_date:string}>|null
+     */
+    protected function normalizeCustomInstallments(PaymentFlow $flow, ?array $customInstallments): ?array
+    {
+        if ($customInstallments === null) {
+            return null;
+        }
+
+        if (count($customInstallments) !== (int) $flow->installments_count) {
+            throw ValidationException::withMessages([
+                'installments' => 'La cantidad de cuotas personalizadas no coincide con el flujo.',
+            ]);
+        }
+
+        $normalized = collect($customInstallments)
+            ->values()
+            ->map(function (array $item) {
+                if (! array_key_exists('amount', $item) || ! array_key_exists('due_date', $item)) {
+                    throw ValidationException::withMessages([
+                        'installments' => 'Cada cuota personalizada debe incluir monto y fecha de vencimiento.',
+                    ]);
+                }
+
+                $amount = round((float) $item['amount'], 2);
+
+                if ($amount <= 0) {
+                    throw ValidationException::withMessages([
+                        'installments' => 'Cada cuota debe tener un monto mayor a cero.',
+                    ]);
+                }
+
+                return [
+                    'amount' => $amount,
+                    'due_date' => Carbon::parse($item['due_date'])->toDateString(),
+                ];
+            });
+
+        $sum = round((float) $normalized->sum('amount'), 2);
+        $expected = round((float) $flow->total_amount, 2);
+
+        if (abs($sum - $expected) > 0.009) {
+            throw ValidationException::withMessages([
+                'installments' => 'La suma de cuotas debe coincidir con el monto total del flujo.',
+            ]);
+        }
+
+        return $normalized->all();
     }
 
     /**

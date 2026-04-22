@@ -1,0 +1,46 @@
+<div class="space-y-8">
+    <div>
+        <h2 class="text-xl font-semibold text-slate-950">Paso 3. Envío automático de cobros</h2>
+        <p class="mt-2 text-sm text-slate-500">
+            Definí si el flujo debe quedar listo para automatizar el envío de comunicaciones de cobro.
+        </p>
+    </div>
+
+    <div class="max-w-3xl space-y-5">
+        <label class="flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5">
+            <input
+                type="checkbox"
+                wire:model.live="auto_send_enabled"
+                class="mt-1 h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+            >
+            <div>
+                <div class="text-base font-semibold text-slate-900">Habilitar envío automático</div>
+                <p class="mt-1 text-sm text-slate-500">
+                    Si el cliente tiene email, el flujo guardará esa dirección para futuros envíos automáticos.
+                </p>
+            </div>
+        </label>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Email detectado</div>
+            <div class="mt-3 text-lg font-semibold text-slate-900">
+                {{ $this->autoSendEmail ?: 'No hay correo registrado' }}
+            </div>
+            <p class="mt-2 text-sm text-slate-500">
+                El email se toma desde el contacto principal del cliente asociado al proyecto.
+            </p>
+        </div>
+
+        @if ($auto_send_enabled && ! $this->autoSendEmail)
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+                Este cliente no tiene correo registrado. El flujo puede guardarse, pero no se enviarán cobros automáticos hasta que se agregue un email.
+            </div>
+        @endif
+
+        @if ($auto_send_enabled && $this->autoSendEmail)
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+                El flujo quedará listo para usar el email {{ $this->autoSendEmail }} cuando se implemente el proceso de envío automático.
+            </div>
+        @endif
+    </div>
+</div>

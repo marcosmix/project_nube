@@ -1,189 +1,142 @@
-<div class="space-y-6">
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-5">
-            <h2 class="text-xl font-semibold text-slate-900">Nuevo flujo de cobro</h2>
-            <p class="mt-1 text-sm text-slate-500">
-                Seleccioná un proyecto y configurá el flujo inicial de cuotas.
-            </p>
-        </div>
-
-        <div class="grid gap-6 lg:grid-cols-2">
-            <div class="space-y-4">
-                <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-600">Buscar proyecto o cliente</label>
-                    <input
-                        type="text"
-                        wire:model.live.debounce.300ms="projectSearch"
-                        placeholder="Ej: Viten o Sitio corporativo..."
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                    >
-                </div>
-
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                    <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Proyectos disponibles
-                    </div>
-
-                    <div class="max-h-80 space-y-2 overflow-y-auto">
-                        @forelse ($projects as $project)
-                            @php
-                                $contact = $project->client?->contact;
-                                $clientName = $contact?->organization
-                                    ?? trim(($contact?->first_name ?? '') . ' ' . ($contact?->last_name ?? ''));
-                                $isSelected = (int) $selectedProject?->id === (int) $project->id;
-                            @endphp
-
-                            <button
-                                type="button"
-                                wire:click="selectProject({{ $project->id }})"
-                                class="w-full rounded-xl border px-3 py-3 text-left transition {{ $isSelected ? 'border-slate-900 bg-white shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300' }}"
-                            >
-                                <div class="text-sm font-medium text-slate-900">{{ $project->name }}</div>
-                                <div class="mt-1 text-xs text-slate-500">{{ $clientName ?: 'Sin cliente' }}</div>
-                            </button>
-                        @empty
-                            <div class="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-sm text-slate-500">
-                                No hay proyectos elegibles para crear un flujo.
-                            </div>
-                        @endforelse
-                    </div>
-
-                    @error('project_id')
-                        <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+<div class="min-h-[calc(100vh-10rem)] rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-6 sm:px-8">
+        <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950">Nuevo flujo de cobro</h1>
+                <p class="mt-2 text-sm text-slate-500">
+                    Configurá el flujo en 3 pasos: proyecto, cuotas y automatización.
+                </p>
             </div>
 
-            <div class="space-y-4">
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Proyecto seleccionado</div>
-
-                    @if ($selectedProject)
-                        @php
-                            $contact = $selectedProject->client?->contact;
-                            $clientName = $contact?->organization
-                                ?? trim(($contact?->first_name ?? '') . ' ' . ($contact?->last_name ?? ''));
-                        @endphp
-
-                        <div class="mt-3 space-y-1">
-                            <div class="text-sm font-medium text-slate-900">{{ $selectedProject->name }}</div>
-                            <div class="text-sm text-slate-600">{{ $clientName ?: 'Sin cliente' }}</div>
-                        </div>
-                    @else
-                        <div class="mt-3 text-sm text-slate-500">
-                            Todavía no seleccionaste un proyecto.
-                        </div>
-                    @endif
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div class="md:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Monto total</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            wire:model="total_amount"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                        @error('total_amount')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Cantidad de cuotas</label>
-                        <input
-                            type="number"
-                            min="1"
-                            wire:model="installments_count"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                        @error('installments_count')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Frecuencia</label>
-                        <select
-                            wire:model="frequency"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                            @foreach ($frequencies as $frequency)
-                                <option value="{{ $frequency->value }}">{{ $frequency->label() }}</option>
-                            @endforeach
-                        </select>
-                        @error('frequency')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Fecha de inicio</label>
-                        <input
-                            type="date"
-                            wire:model="start_date"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                        @error('start_date')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Días de gracia</label>
-                        <input
-                            type="number"
-                            min="0"
-                            wire:model="grace_days"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                        @error('grace_days')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Estado inicial</label>
-                        <select
-                            wire:model="status"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                        >
-                            <option value="active">Activo</option>
-                            <option value="draft">Borrador</option>
-                        </select>
-                        @error('status')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-slate-600">Observaciones</label>
-                        <textarea
-                            wire:model="notes"
-                            rows="4"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                            placeholder="Notas internas del flujo..."
-                        ></textarea>
-                        @error('notes')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="flex justify-end">
+            <div class="grid gap-3 sm:grid-cols-3">
+                @foreach ([
+                    1 => ['title' => 'Cliente y proyecto', 'subtitle' => 'Seleccioná el origen del flujo'],
+                    2 => ['title' => 'Configuración del flujo', 'subtitle' => 'Definí cuotas y fechas'],
+                    3 => ['title' => 'Envío automático', 'subtitle' => 'Ajustá la automatización'],
+                ] as $step => $meta)
                     <button
                         type="button"
-                        wire:click="create"
-                        wire:loading.attr="disabled"
-                        class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        wire:click="goToStep({{ $step }})"
+                        class="rounded-2xl border px-4 py-3 text-left transition {{ $currentStep === $step ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : ($currentStep > $step ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600') }}"
                     >
-                        <span wire:loading.remove wire:target="create">Crear flujo</span>
-                        <span wire:loading wire:target="create">Creando...</span>
+                        <div class="text-xs font-semibold uppercase tracking-[0.2em]">{{ str_pad((string) $step, 2, '0', STR_PAD_LEFT) }}</div>
+                        <div class="mt-2 text-sm font-semibold">{{ $meta['title'] }}</div>
+                        <div class="mt-1 text-xs {{ $currentStep === $step ? 'text-slate-300' : 'text-slate-400' }}">{{ $meta['subtitle'] }}</div>
                     </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="grid min-h-[42rem] gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="px-6 py-6 sm:px-8">
+            @if ($currentStep === 1)
+                @include('livewire.cobros.forms.partials.create-flow-step-1')
+            @elseif ($currentStep === 2)
+                @include('livewire.cobros.forms.partials.create-flow-step-2')
+            @else
+                @include('livewire.cobros.forms.partials.create-flow-step-3')
+            @endif
+        </div>
+
+        <aside class="border-t border-slate-200 bg-slate-50/70 px-6 py-6 xl:border-l xl:border-t-0">
+            <div class="space-y-5">
+                <div>
+                    <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Resumen</h2>
+                    <p class="mt-1 text-sm text-slate-500">Estado actual del flujo en creación.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Cliente</div>
+                        <div class="mt-2 text-sm font-medium text-slate-900">
+                            {{ $selectedClient?->organization_name ?? 'Sin seleccionar' }}
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Proyecto</div>
+                        <div class="mt-2 text-sm font-medium text-slate-900">
+                            {{ $selectedProject?->name ?? 'Sin seleccionar' }}
+                        </div>
+                        @if ($selectedProject)
+                            <div class="mt-1 text-xs text-slate-500">{{ $selectedProject->status->label() }}</div>
+                        @endif
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Monto total</div>
+                        <div class="mt-2 text-lg font-semibold text-slate-900">
+                            ${{ number_format((float) $total_amount, 2, ',', '.') }}
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Cuotas</div>
+                        <div class="mt-2 text-lg font-semibold text-slate-900">{{ $installments_count }}</div>
+                        <div class="mt-1 text-xs text-slate-500">{{ collect($installmentRows)->filter()->count() }} configuradas</div>
+                    </div>
+
+                    <div class="rounded-2xl border px-4 py-4 {{ $this->installmentSummaryTone }}">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em]">Control de suma</div>
+                        <div class="mt-2 text-sm font-semibold">
+                            ${{ number_format($this->installmentsSum, 2, ',', '.') }}
+                            @if (abs($this->installmentsDifference) > 0.009)
+                                <span class="font-normal">
+                                    (dif. ${{ number_format(abs($this->installmentsDifference), 2, ',', '.') }})
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Automatización</div>
+                        <div class="mt-2 text-sm font-medium text-slate-900">
+                            {{ $auto_send_enabled ? 'Envío automático habilitado' : 'Envío automático desactivado' }}
+                        </div>
+                        <div class="mt-1 text-xs text-slate-500">
+                            {{ $this->autoSendEmail ?: 'Sin email detectado' }}
+                        </div>
+                    </div>
                 </div>
             </div>
+        </aside>
+    </div>
+
+    <div class="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div class="text-sm text-slate-500">
+            Paso {{ $currentStep }} de 3
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <button
+                type="button"
+                wire:click="previousStep"
+                @disabled($currentStep === 1)
+                class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                Volver
+            </button>
+
+            @if ($currentStep < 3)
+                <button
+                    type="button"
+                    wire:click="nextStep"
+                    class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                    Siguiente
+                </button>
+            @else
+                <button
+                    type="button"
+                    wire:click="save"
+                    wire:loading.attr="disabled"
+                    class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    <span wire:loading.remove wire:target="save">Guardar flujo</span>
+                    <span wire:loading wire:target="save">Guardando...</span>
+                </button>
+            @endif
         </div>
     </div>
 </div>
