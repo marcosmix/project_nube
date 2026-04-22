@@ -1,0 +1,102 @@
+
+<div class="space-y-4 border-t border-slate-200 pt-4">
+    <div>
+        <h3 class="text-sm font-semibold text-slate-800">Registrar pago</h3>
+        <p class="text-xs text-slate-500">
+            El pago se registra sobre esta cuota. Si excede el saldo, se aplicará a las siguientes.
+        </p>
+    </div>
+
+    <div class="grid gap-4">
+        <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Fecha de pago</label>
+            <input
+                type="date"
+                wire:model="paid_at"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+            >
+            @error('paid_at')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Monto</label>
+            <input
+                type="number"
+                step="0.01"
+                min="0"
+                wire:model="amount"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+            >
+            <p class="mt-1 text-xs text-slate-500">
+                Saldo actual: ${{ number_format((float) $installment->balance_due, 2, ',', '.') }}
+            </p>
+            @error('amount')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Observación</label>
+            <textarea
+                wire:model="notes"
+                rows="3"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+                placeholder="Detalle opcional del pago..."
+            ></textarea>
+            @error('notes')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Comprobantes</label>
+            <input
+                type="file"
+                wire:model="receipts"
+                multiple
+                class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            >
+            <p class="mt-1 text-xs text-slate-500">Permitidos: JPG, PNG, WEBP y PDF. Máximo 10 MB por archivo.</p>
+
+            <div wire:loading wire:target="receipts" class="mt-2 text-xs text-slate-500">
+                Cargando comprobantes...
+            </div>
+
+            @error('receipts')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+
+            @error('receipts.*')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        @if (! empty($receipts))
+            <div class="rounded-xl bg-slate-50 p-3">
+                <p class="mb-2 text-xs font-medium text-slate-700">Archivos seleccionados</p>
+
+                <div class="space-y-1">
+                    @foreach ($receipts as $file)
+                        <div class="text-xs text-slate-600">
+                            {{ $file->getClientOriginalName() }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <div class="flex items-center justify-end">
+            <button
+                type="button"
+                wire:click="save"
+                wire:loading.attr="disabled"
+                class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                <span wire:loading.remove wire:target="save">Registrar pago</span>
+                <span wire:loading wire:target="save">Guardando...</span>
+            </button>
+        </div>
+    </div>
+</div>
