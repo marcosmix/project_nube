@@ -1,11 +1,6 @@
 <div class="py-8">
     <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-       <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">
-            Developers
-        </h2>
-    </x-slot>
+      
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
@@ -206,7 +201,7 @@
         </div>
     </div>
 
-</x-app-layout>
+
     </div>
 
     @include('livewire.developers.partials.developer-form')
