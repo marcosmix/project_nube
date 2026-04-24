@@ -18,80 +18,49 @@ class RegisterPaymentAction
     ) {}
 
     /**
-     * @param  PaymentInstallment  $installment
      * @param  array{
      *     amount:numeric,
      *     paid_at:string|\DateTimeInterface,
-     *     notes?:string|null
+     *     notes?:string|null,
+     *     payment_method?:string|null
      * }  $data
      * @return Collection<int, Payment>
      */
     public function execute(PaymentInstallment $installment, array $data, ?User $user = null): Collection
     {
         return DB::transaction(function () use ($installment, $data, $user) {
+            $installment->refresh();
             $installment->loadMissing('flow');
 
             $this->validateInstallment($installment);
             $this->validateInput($installment, $data);
 
-            $amountToApply = round((float) $data['amount'], 2);
+            $amount = round((float) $data['amount'], 2);
             $paidAt = $data['paid_at'];
             $notes = $data['notes'] ?? null;
+            $paymentMethod = $data['payment_method'] ?? null;
+            $remainingAfterPayment = round((float) $installment->balance_due - $amount, 2);
 
-            $payments = collect();
-            $currentInstallment = $installment;
+            $payment = $installment->payments()->create([
+                'paid_by' => $user?->id,
+                'paid_at' => $paidAt,
+                'amount' => $amount,
+                'remaining_after_payment' => $remainingAfterPayment,
+                'status' => PaymentStatus::Posted->value,
+                'payment_method' => $paymentMethod,
+                'notes' => $notes,
+            ]);
 
-            while ($amountToApply > 0 && $currentInstallment) {
-                $currentInstallment->refresh();
-                $currentInstallment->loadMissing('flow');
+            $installment->update([
+                'paid_amount' => round((float) $installment->paid_amount + $amount, 2),
+                'balance_due' => $remainingAfterPayment,
+                'last_payment_at' => $paidAt,
+                'locked_at' => $installment->locked_at ?? now(),
+            ]);
 
-                $currentBalance = round((float) $currentInstallment->balance_due, 2);
+            $this->syncInstallmentStatusAction->execute($installment, $user);
 
-                if ($currentBalance <= 0) {
-                    $currentInstallment = $this->nextOpenInstallment($currentInstallment);
-                    continue;
-                }
-
-                $applied = min($amountToApply, $currentBalance);
-                $remainingAfterPayment = round($currentBalance - $applied, 2);
-
-                $payment = $currentInstallment->payments()->create([
-                    'paid_by' => $user?->id,
-                    'paid_at' => $paidAt,
-                    'amount' => $applied,
-                    'remaining_after_payment' => $remainingAfterPayment,
-                    'status' => PaymentStatus::Posted->value,
-                    'notes' => $notes,
-                ]);
-
-                $currentInstallment->update([
-                    'paid_amount' => round((float) $currentInstallment->paid_amount + $applied, 2),
-                    'balance_due' => $remainingAfterPayment,
-                    'last_payment_at' => $paidAt,
-                    'locked_at' => $currentInstallment->locked_at ?? now(),
-                ]);
-
-                $this->syncInstallmentStatusAction->execute($currentInstallment, $user);
-
-                $payments->push($payment);
-
-                $amountToApply = round($amountToApply - $applied, 2);
-
-                if ($amountToApply <= 0) {
-                    break;
-                }
-
-                $currentInstallment = $this->nextOpenInstallment($currentInstallment);
-            }
-
-            // Por seguridad: si llegó acá con remanente, algo quedó mal
-            if ($amountToApply > 0) {
-                throw ValidationException::withMessages([
-                    'amount' => 'No fue posible distribuir completamente el pago.',
-                ]);
-            }
-
-            return $payments;
+            return collect([$payment]);
         });
     }
 
@@ -115,6 +84,8 @@ class RegisterPaymentAction
     protected function validateInput(PaymentInstallment $installment, array $data): void
     {
         $amount = round((float) ($data['amount'] ?? 0), 2);
+        $balanceDue = round((float) $installment->balance_due, 2);
+        $paymentMethod = $data['payment_method'] ?? null;
 
         if ($amount <= 0) {
             throw ValidationException::withMessages([
@@ -128,33 +99,22 @@ class RegisterPaymentAction
             ]);
         }
 
-        $availableBalance = $this->availableBalanceFromHere($installment);
-
-        if ($amount > $availableBalance) {
+        if ($balanceDue <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'El monto excede el saldo disponible desde esta cuota en adelante.',
+                'amount' => 'La cuota seleccionada ya no tiene saldo pendiente.',
             ]);
         }
-    }
 
-    protected function availableBalanceFromHere(PaymentInstallment $installment): float
-    {
-        return round(
-            (float) $installment->flow
-                ->installments()
-                ->where('number', '>=', $installment->number)
-                ->sum('balance_due'),
-            2
-        );
-    }
+        if ($amount > $balanceDue) {
+            throw ValidationException::withMessages([
+                'amount' => 'El monto no puede ser mayor al saldo pendiente de la cuota.',
+            ]);
+        }
 
-    protected function nextOpenInstallment(PaymentInstallment $installment): ?PaymentInstallment
-    {
-        return $installment->flow
-            ->installments()
-            ->where('number', '>', $installment->number)
-            ->where('balance_due', '>', 0)
-            ->orderBy('number')
-            ->first();
+        if ($paymentMethod !== null && $paymentMethod !== '' && ! in_array($paymentMethod, Payment::METHODS, true)) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'El tipo de pago seleccionado no es válido.',
+            ]);
+        }
     }
 }

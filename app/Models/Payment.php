@@ -11,6 +11,21 @@ class Payment extends Model
 {
     protected $guarded = [];
 
+    public const METHOD_ECHEQ = 'echeq';
+
+    public const METHOD_CASH = 'efectivo';
+
+    public const METHOD_TRANSFER = 'transferencia';
+
+    public const METHOD_MERCADO_PAGO = 'mercado_pago';
+
+    public const METHODS = [
+        self::METHOD_ECHEQ,
+        self::METHOD_CASH,
+        self::METHOD_TRANSFER,
+        self::METHOD_MERCADO_PAGO,
+    ];
+
     protected $casts = [
         'paid_at' => 'datetime',
         'amount' => 'decimal:2',
@@ -37,5 +52,16 @@ class Payment extends Model
     public function voidedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    public function paymentMethodLabel(): ?string
+    {
+        return match ($this->payment_method) {
+            self::METHOD_ECHEQ => 'Echeq',
+            self::METHOD_CASH => 'Efectivo',
+            self::METHOD_TRANSFER => 'Transferencia',
+            self::METHOD_MERCADO_PAGO => 'Mercado Pago',
+            default => null,
+        };
     }
 }

@@ -25,7 +25,7 @@
             </div>
             <div>
                 <a href="{{ route('cobros.create') }}"
-                    class="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-black hover:bg-slate-800">
+                    class="inline-flex rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     Nuevo flujo
                 </a>
             </div>

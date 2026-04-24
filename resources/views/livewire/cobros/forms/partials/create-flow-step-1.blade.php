@@ -8,7 +8,7 @@
 
     <div class="max-w-xl">
         <label class="mb-2 block text-sm font-medium text-slate-700">Cliente</label>
-        <select wire:model.live="client_id" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70">
+        <select wire:model.live="client_id" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-100">
             <option value="">Seleccioná un cliente</option>
             @foreach ($clients as $client)
                 <option value="{{ $client->id }}">
@@ -22,7 +22,7 @@
     </div>
 
     @if ($selectedClient)
-        <div class="rounded-2xl border border-slate-300 bg-slate-100 p-4 shadow-sm">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
             <div class="text-sm font-medium text-slate-900">{{ $selectedClient->organization_name }}</div>
             <div class="mt-1 text-sm text-slate-600">
                 {{ $selectedClient->contact?->fullName ?: 'Sin contacto' }}
@@ -48,14 +48,14 @@
                         type="button"
                         wire:click="selectProject({{ $project->id }})"
                         @disabled($disabledReason !== null)
-                        class="rounded-2xl border p-5 text-left shadow-sm transition focus:outline-none focus:ring-4 focus:ring-slate-200/70 {{ $isSelected ? 'border-slate-900 bg-slate-900 text-white' : ($disabledReason ? 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 opacity-100' : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50') }}"
+                        class="rounded-2xl border p-5 text-left shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-100 {{ $isSelected ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-100' : ($disabledReason ? 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 opacity-100' : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50') }}"
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <div class="text-lg font-semibold tracking-tight {{ $isSelected ? 'text-white' : 'text-slate-900' }}">
+                                <div class="text-lg font-semibold tracking-tight {{ $isSelected ? 'text-blue-950' : 'text-slate-900' }}">
                                     {{ $project->name }}
                                 </div>
-                                <div class="mt-1 text-sm {{ $isSelected ? 'text-slate-300' : 'text-slate-600' }}">
+                                <div class="mt-1 text-sm {{ $isSelected ? 'text-blue-700' : 'text-slate-600' }}">
                                     {{ $project->status->label() }}
                                 </div>
                             </div>
@@ -65,7 +65,7 @@
                                     {{ $disabledReason }}
                                 </span>
                             @elseif ($isSelected)
-                                <span class="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white">
+                                <span class="inline-flex rounded-full border border-blue-200 bg-white px-2.5 py-1 text-xs font-medium text-blue-700">
                                     Seleccionado
                                 </span>
                             @else
@@ -76,9 +76,9 @@
                         </div>
 
                         <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                            <div class="rounded-xl border {{ $isSelected ? 'border-white/10 bg-white/10' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
-                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-500' }}">Monto del proyecto</div>
-                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
+                            <div class="rounded-xl border {{ $isSelected ? 'border-blue-200 bg-white' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
+                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-blue-700' : 'text-slate-500' }}">Monto del proyecto</div>
+                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-blue-950' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
                                     @if ($project->total_cost)
                                         ${{ number_format((float) $project->total_cost, 2, ',', '.') }}
                                     @else
@@ -86,9 +86,9 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="rounded-xl border {{ $isSelected ? 'border-white/10 bg-white/10' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
-                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-slate-300' : 'text-slate-500' }}">Flujos abiertos</div>
-                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-white' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
+                            <div class="rounded-xl border {{ $isSelected ? 'border-blue-200 bg-white' : ($disabledReason ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50') }} p-3">
+                                <div class="text-[11px] font-medium uppercase tracking-[0.18em] {{ $isSelected ? 'text-blue-700' : 'text-slate-500' }}">Flujos abiertos</div>
+                                <div class="mt-2 text-sm font-semibold {{ $isSelected ? 'text-blue-950' : ($disabledReason ? 'text-slate-700' : 'text-slate-900') }}">
                                     {{ $project->paymentFlows->filter(fn ($flow) => in_array($flow->status->value, ['draft', 'active'], true))->count() }}
                                 </div>
                             </div>

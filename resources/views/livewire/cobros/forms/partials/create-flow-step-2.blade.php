@@ -13,7 +13,7 @@
     @else
         <div class="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <div class="space-y-6">
-                <div class="rounded-2xl border border-slate-300 bg-slate-100 p-5 shadow-sm">
+                <div class="rounded-2xl border border-orange-200 bg-orange-50/80 p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-900">{{ $selectedProject->name }}</div>
                     <div class="mt-1 text-sm text-slate-600">{{ $selectedProject->status->label() }}</div>
                 </div>
@@ -37,7 +37,7 @@
                         <input
                             type="date"
                             wire:model.live="start_date"
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                         >
                         @error('start_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -48,7 +48,7 @@
                         <label class="mb-2 block text-sm font-medium text-slate-700">Frecuencia</label>
                         <select
                             wire:model.live="frequency"
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                         >
                             @foreach ($frequencies as $frequency)
                                 <option value="{{ $frequency->value }}">{{ $frequency->label() }}</option>
@@ -65,7 +65,7 @@
                             type="number"
                             min="0"
                             wire:model.live="grace_days"
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                         >
                         @error('grace_days')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -79,7 +79,7 @@
                             min="1"
                             max="240"
                             wire:model.live="installments_count"
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                         >
                         @error('installments_count')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -91,7 +91,7 @@
                         <textarea
                             wire:model.live="notes"
                             rows="4"
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                             placeholder="Notas internas del flujo..."
                         ></textarea>
                         @error('notes')
@@ -154,7 +154,7 @@
                                         step="0.01"
                                         min="0"
                                         wire:model.live="installmentRows.{{ $index }}.amount"
-                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                                     >
                                     @error("installmentRows.$index.amount")
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -166,7 +166,7 @@
                                     <input
                                         type="date"
                                         wire:model.live="installmentRows.{{ $index }}.due_date"
-                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-4 focus:ring-slate-200/70"
+                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100"
                                     >
                                     @error("installmentRows.$index.due_date")
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

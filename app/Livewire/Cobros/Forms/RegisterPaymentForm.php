@@ -5,10 +5,11 @@ namespace App\Livewire\Cobros\Forms;
 use App\Actions\Cobros\RegisterPaymentAction;
 use App\Models\Payment;
 use App\Models\PaymentInstallment;
-use Livewire\Component;
-use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class RegisterPaymentForm extends Component
 {
@@ -17,13 +18,14 @@ class RegisterPaymentForm extends Component
     public PaymentInstallment $installment;
 
     public string $paid_at = '';
+
     public string $amount = '';
+
+    public ?string $payment_method = null;
+
     public ?string $notes = null;
 
-    /**
-     * @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile>
-     */
-    public array $receipts = [];
+    public $receipt = null;
 
     public function mount(PaymentInstallment $installment): void
     {
@@ -32,14 +34,24 @@ class RegisterPaymentForm extends Component
         $this->amount = number_format((float) $this->installment->balance_due, 2, '.', '');
     }
 
+    public function paymentMethodOptions(): array
+    {
+        return [
+            Payment::METHOD_ECHEQ => 'Echeq',
+            Payment::METHOD_CASH => 'Efectivo',
+            Payment::METHOD_TRANSFER => 'Transferencia',
+            Payment::METHOD_MERCADO_PAGO => 'Mercado Pago',
+        ];
+    }
+
     protected function rules(): array
     {
         return [
             'paid_at' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'gt:0'],
+            'payment_method' => ['nullable', 'in:'.implode(',', Payment::METHODS)],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'receipts' => ['array'],
-            'receipts.*' => ['file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:10240'],
+            'receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:10240'],
         ];
     }
 
@@ -50,8 +62,9 @@ class RegisterPaymentForm extends Component
             'amount.required' => 'El monto es obligatorio.',
             'amount.numeric' => 'El monto debe ser numérico.',
             'amount.gt' => 'El monto debe ser mayor a cero.',
-            'receipts.*.mimes' => 'Los comprobantes deben ser imagen o PDF.',
-            'receipts.*.max' => 'Cada comprobante puede pesar hasta 10 MB.',
+            'payment_method.in' => 'Seleccioná un tipo de pago válido.',
+            'receipt.mimes' => 'El comprobante debe ser imagen o PDF.',
+            'receipt.max' => 'El comprobante puede pesar hasta 10 MB.',
         ];
     }
 
@@ -66,6 +79,14 @@ class RegisterPaymentForm extends Component
         }
 
         $validated = $this->validate();
+        $balanceDue = round((float) $this->installment->balance_due, 2);
+        $amount = round((float) $validated['amount'], 2);
+
+        if ($amount > $balanceDue) {
+            throw ValidationException::withMessages([
+                'amount' => 'El monto no puede ser mayor al saldo pendiente de la cuota.',
+            ]);
+        }
 
         DB::transaction(function () use ($validated, $registerPaymentAction) {
             $payments = $registerPaymentAction->execute(
@@ -73,29 +94,26 @@ class RegisterPaymentForm extends Component
                 [
                     'amount' => (float) $validated['amount'],
                     'paid_at' => $validated['paid_at'],
+                    'payment_method' => $validated['payment_method'] ?? null,
                     'notes' => $validated['notes'] ?? null,
                 ],
-                auth()->user()
+                Auth::user()
             );
 
-            // Para mantener la primera versión simple:
-            // adjuntamos todos los comprobantes al primer pago generado.
             /** @var Payment|null $firstPayment */
             $firstPayment = $payments->first();
 
-            if ($firstPayment && ! empty($this->receipts)) {
-                foreach ($this->receipts as $file) {
-                    $path = $file->store('cobros/comprobantes', 'public');
+            if ($firstPayment && $this->receipt) {
+                $path = $this->receipt->store('cobros/comprobantes', 'public');
 
-                    $firstPayment->receipts()->create([
-                        'uploaded_by' => auth()->id(),
-                        'disk' => 'public',
-                        'path' => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'size' => $file->getSize(),
-                    ]);
-                }
+                $firstPayment->receipts()->create([
+                    'uploaded_by' => Auth::id(),
+                    'disk' => 'public',
+                    'path' => $path,
+                    'original_name' => $this->receipt->getClientOriginalName(),
+                    'mime_type' => $this->receipt->getMimeType(),
+                    'size' => $this->receipt->getSize(),
+                ]);
             }
         });
 
@@ -105,8 +123,9 @@ class RegisterPaymentForm extends Component
         $this->installment->refresh();
         $this->amount = number_format((float) $this->installment->balance_due, 2, '.', '');
         $this->paid_at = now()->toDateString();
+        $this->payment_method = null;
         $this->notes = null;
-        $this->receipts = [];
+        $this->receipt = null;
         $this->resetValidation();
     }
 

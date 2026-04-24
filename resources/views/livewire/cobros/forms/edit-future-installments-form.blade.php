@@ -69,7 +69,7 @@
             type="button"
             wire:click="save"
             wire:loading.attr="disabled"
-            class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
             <span wire:loading.remove wire:target="save">Guardar cambios</span>
             <span wire:loading wire:target="save">Guardando...</span>

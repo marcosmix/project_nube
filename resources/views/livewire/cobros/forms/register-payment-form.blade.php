@@ -1,9 +1,9 @@
 
-<div class="space-y-4 border-t border-slate-200 pt-4">
+<form wire:submit="save" class="space-y-5">
     <div>
         <h3 class="text-sm font-semibold text-slate-800">Registrar pago</h3>
         <p class="text-xs text-slate-500">
-            El pago se registra sobre esta cuota. Si excede el saldo, se aplicará a las siguientes.
+            El pago se registra sobre esta cuota y no puede superar el saldo pendiente.
         </p>
     </div>
 
@@ -26,13 +26,29 @@
                 type="number"
                 step="0.01"
                 min="0"
-                wire:model="amount"
+                wire:model.blur="amount"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
             >
             <p class="mt-1 text-xs text-slate-500">
                 Saldo actual: ${{ number_format((float) $installment->balance_due, 2, ',', '.') }}
             </p>
             @error('amount')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Tipo de pago</label>
+            <select
+                wire:model="payment_method"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+            >
+                <option value="">Seleccionar opcionalmente</option>
+                @foreach ($this->paymentMethodOptions() as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+            @error('payment_method')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
         </div>
@@ -51,52 +67,39 @@
         </div>
 
         <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600">Comprobantes</label>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Comprobante</label>
             <input
                 type="file"
-                wire:model="receipts"
-                multiple
+                wire:model="receipt"
                 class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
             >
-            <p class="mt-1 text-xs text-slate-500">Permitidos: JPG, PNG, WEBP y PDF. Máximo 10 MB por archivo.</p>
+            <p class="mt-1 text-xs text-slate-500">Opcional. Permitidos: JPG, PNG, WEBP y PDF. Máximo 10 MB.</p>
 
-            <div wire:loading wire:target="receipts" class="mt-2 text-xs text-slate-500">
-                Cargando comprobantes...
+            <div wire:loading wire:target="receipt" class="mt-2 text-xs text-slate-500">
+                Cargando comprobante...
             </div>
 
-            @error('receipts')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-
-            @error('receipts.*')
+            @error('receipt')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
-        @if (! empty($receipts))
+        @if ($receipt)
             <div class="rounded-xl bg-slate-50 p-3">
-                <p class="mb-2 text-xs font-medium text-slate-700">Archivos seleccionados</p>
-
-                <div class="space-y-1">
-                    @foreach ($receipts as $file)
-                        <div class="text-xs text-slate-600">
-                            {{ $file->getClientOriginalName() }}
-                        </div>
-                    @endforeach
-                </div>
+                <p class="mb-2 text-xs font-medium text-slate-700">Comprobante seleccionado</p>
+                <div class="text-xs text-slate-600">{{ $receipt->getClientOriginalName() }}</div>
             </div>
         @endif
 
         <div class="flex items-center justify-end">
             <button
-                type="button"
-                wire:click="save"
+                type="submit"
                 wire:loading.attr="disabled"
-                class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
                 <span wire:loading.remove wire:target="save">Registrar pago</span>
                 <span wire:loading wire:target="save">Guardando...</span>
             </button>
         </div>
     </div>
-</div>
+</form>

@@ -18,23 +18,23 @@
                         $stepPalette = match ($step) {
                             1 => [
                                 'base' => 'border-amber-300',
-                                'idle' => 'bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50/40',
-                                'active' => 'border-amber-500 bg-amber-50 text-amber-950 ring-4 ring-amber-100',
-                                'done' => 'border-amber-400 bg-amber-50/70 text-amber-900',
+                                'idle' => 'bg-white text-slate-800 hover:border-amber-500 hover:bg-amber-50/60',
+                                'active' => 'border-amber-600 bg-amber-100 text-amber-950 ring-4 ring-amber-100 shadow-sm',
+                                'done' => 'border-amber-500 bg-amber-50 text-amber-900',
                                 'subtitle' => 'text-amber-700',
                             ],
                             2 => [
                                 'base' => 'border-orange-300',
-                                'idle' => 'bg-white text-slate-700 hover:border-orange-400 hover:bg-orange-50/40',
-                                'active' => 'border-orange-500 bg-orange-50 text-orange-950 ring-4 ring-orange-100',
-                                'done' => 'border-orange-400 bg-orange-50/70 text-orange-900',
+                                'idle' => 'bg-white text-slate-800 hover:border-orange-500 hover:bg-orange-50/60',
+                                'active' => 'border-orange-600 bg-orange-100 text-orange-950 ring-4 ring-orange-100 shadow-sm',
+                                'done' => 'border-orange-500 bg-orange-50 text-orange-900',
                                 'subtitle' => 'text-orange-700',
                             ],
                             default => [
                                 'base' => 'border-blue-300',
-                                'idle' => 'bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50/40',
-                                'active' => 'border-blue-500 bg-blue-50 text-blue-950 ring-4 ring-blue-100',
-                                'done' => 'border-blue-400 bg-blue-50/70 text-blue-900',
+                                'idle' => 'bg-white text-slate-800 hover:border-blue-500 hover:bg-blue-50/60',
+                                'active' => 'border-blue-600 bg-blue-100 text-blue-950 ring-4 ring-blue-100 shadow-sm',
+                                'done' => 'border-blue-500 bg-blue-50 text-blue-900',
                                 'subtitle' => 'text-blue-700',
                             ],
                         };
@@ -46,7 +46,7 @@
                     <button
                         type="button"
                         wire:click="goToStep({{ $step }})"
-                        class="rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition focus:outline-none {{ $stepPalette['base'] }} {{ $stateClasses }}"
+                        class="rounded-2xl border-2 px-4 py-3 text-left shadow-sm transition focus:outline-none focus:ring-4 focus:ring-slate-100 {{ $stepPalette['base'] }} {{ $stateClasses }}"
                     >
                         <div class="text-xs font-semibold uppercase tracking-[0.2em]">{{ str_pad((string) $step, 2, '0', STR_PAD_LEFT) }}</div>
                         <div class="mt-2 text-sm font-semibold">{{ $meta['title'] }}</div>
@@ -144,7 +144,7 @@
                 type="button"
                 wire:click="previousStep"
                 @disabled($currentStep === 1)
-                class="inline-flex items-center justify-center rounded-2xl border border-orange-500 bg-orange-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:text-white disabled:opacity-100"
+                class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100"
             >
                 Volver
             </button>
@@ -153,7 +153,7 @@
                 <button
                     type="button"
                     wire:click="nextStep"
-                    class="inline-flex items-center justify-center rounded-2xl border border-orange-500 bg-orange-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-100"
+                    class="inline-flex items-center justify-center rounded-2xl border border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-medium text-orange-950 shadow-sm transition hover:border-orange-400 hover:bg-orange-100 focus:outline-none focus:ring-4 focus:ring-orange-100"
                 >
                     Siguiente
                 </button>
@@ -162,7 +162,7 @@
                     type="button"
                     wire:click="save"
                     wire:loading.attr="disabled"
-                    class="inline-flex items-center justify-center rounded-2xl border border-orange-500 bg-orange-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:text-white disabled:opacity-100"
+                    class="inline-flex items-center justify-center rounded-2xl border border-orange-300 bg-orange-50 px-5 py-2.5 text-sm font-medium text-orange-950 shadow-sm transition hover:border-orange-400 hover:bg-orange-100 focus:outline-none focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:border-orange-200 disabled:bg-orange-50 disabled:text-orange-500 disabled:opacity-100"
                 >
                     <span wire:loading.remove wire:target="save">Guardar flujo</span>
                     <span wire:loading wire:target="save">Guardando...</span>
