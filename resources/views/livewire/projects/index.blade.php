@@ -268,22 +268,16 @@
                         </div>
                     </div>
 
-                    {{-- Finanzas desde interested --}}
+                    {{-- Contratación desde interested --}}
                     @if(($form['status'] ?? 'prospection') !== 'prospection')
                         <div class="mt-6 rounded-2xl border p-5">
-                            <div class="mb-4 text-lg font-semibold text-gray-900">Información Financiera</div>
+                            <div class="mb-4 text-lg font-semibold text-gray-900">Información de Contratación</div>
 
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="text-sm text-gray-600">Costo Total</label>
                                     <input type="number" wire:model.defer="form.total_cost" class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2" />
                                     @error('form.total_cost') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div>
-                                    <label class="text-sm text-gray-600">Cuotas</label>
-                                    <input type="number" wire:model.defer="form.installments" class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2" />
-                                    @error('form.installments') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div>

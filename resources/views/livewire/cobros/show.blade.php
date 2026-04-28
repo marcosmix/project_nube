@@ -106,11 +106,12 @@
             <button
                 type="button"
                 wire:click="closeInstallmentDrawer"
-                class="fixed inset-0 z-0 bg-slate-950/35 backdrop-blur-[1px]"
+                class="fixed inset-0"
+                style="position: fixed; inset: 0; z-index: 40; background-color: rgba(15, 23, 42, 0.85);"
                 aria-label="Cerrar detalle de cuota"
             ></button>
 
-            <div class="relative z-10 flex min-h-full justify-end">
+            <div class="relative z-50 flex min-h-full justify-end">
                 <div class="w-full max-w-xl min-h-screen border-l border-slate-200 bg-white shadow-2xl" wire:click.stop>
                     <div class="flex min-h-screen flex-col">
                         <div class="sticky top-0 z-10 shrink-0 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
@@ -119,7 +120,7 @@
                                 Cuota #{{ $selectedInstallment->number }}
                             </h2>
                             <p class="mt-1 text-sm text-slate-500">
-                                {{ $isVoidPaymentModalOpen ? 'Anulacion de pago' : 'Detalle e historial' }}
+                                {{ $isRegisterPaymentModalOpen ? 'Registro de pago' : ($isVoidPaymentModalOpen ? 'Anulacion de pago' : 'Detalle e historial') }}
                             </p>
                         </div>
 
@@ -141,7 +142,44 @@
 
                         <div class="flex-1 px-6 py-6">
                             <div class="space-y-6 pb-6">
-                                @if ($isVoidPaymentModalOpen && $paymentBeingVoided)
+                                @if ($isRegisterPaymentModalOpen && $paymentModalInstallment)
+                                    <section class="max-w-md space-y-4">
+                                        <div class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                                            <button
+                                                type="button"
+                                                wire:click="closeRegisterPaymentModal"
+                                                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                                                aria-label="Volver al historial"
+                                            >
+                                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M11.78 15.78a.75.75 0 0 1-1.06 0l-5.25-5.25a.75.75 0 0 1 0-1.06l5.25-5.25a.75.75 0 1 1 1.06 1.06L7.81 9.25H15a.75.75 0 0 1 0 1.5H7.81l3.97 3.97a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-slate-900">Agregar pago</h3>
+                                                <p class="mt-1 text-sm text-slate-500">Cargá el pago sin salir del detalle de la cuota.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4">
+                                            <p class="text-xs font-medium uppercase tracking-[0.18em] text-blue-700">Detalle de la cuota</p>
+                                            <p class="mt-2 text-base font-semibold text-slate-900">
+                                                Cuota #{{ $paymentModalInstallment->number }}
+                                            </p>
+                                            <p class="mt-1 text-sm text-slate-600">
+                                                Saldo pendiente: ${{ number_format((float) $paymentModalInstallment->balance_due, 2, ',', '.') }}
+                                            </p>
+                                        </div>
+
+                                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                            <livewire:cobros.forms.register-payment-form
+                                                :installment="$paymentModalInstallment"
+                                                :key="'register-payment-'.$paymentModalInstallment->id.'-'.$registerPaymentModalNonce"
+                                            />
+                                        </div>
+                                    </section>
+                                @elseif ($isVoidPaymentModalOpen && $paymentBeingVoided)
                                     <section class="max-w-sm space-y-4">
                                         <div class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                                             <button
@@ -197,7 +235,8 @@
                                                 <button
                                                     type="submit"
                                                     wire:loading.attr="disabled"
-                                                    class="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    class="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
+                                                    style="background-color: white; border: 2px solid #be123c; color: #9f1239; font-weight: 600;"
                                                 >
                                                     <span wire:loading.remove wire:target="voidPayment">Confirmar anulacion</span>
                                                     <span wire:loading wire:target="voidPayment">Anulando...</span>
@@ -396,54 +435,6 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    @if ($isRegisterPaymentModalOpen && $paymentModalInstallment)
-        <div class="fixed inset-0 z-[60]" aria-labelledby="register-payment-modal-title" role="dialog" aria-modal="true">
-            <button
-                type="button"
-                wire:click="closeRegisterPaymentModal"
-                class="absolute inset-0 bg-slate-950/45"
-                aria-label="Cerrar modal de registro de pago"
-            ></button>
-
-            <div class="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
-                <div class="relative w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl" wire:click.stop>
-                    <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
-                        <div>
-                            <h2 id="register-payment-modal-title" class="text-xl font-semibold text-slate-900">
-                                Agregar pago a cuota #{{ $paymentModalInstallment->number }}
-                            </h2>
-                            <p class="mt-1 text-sm text-slate-500">
-                                Saldo pendiente: ${{ number_format((float) $paymentModalInstallment->balance_due, 2, ',', '.') }}
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            wire:click="closeRegisterPaymentModal"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                            aria-label="Cerrar modal"
-                        >
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4.22 4.22a.75.75 0 0 1 1.06 0L10 8.94l4.72-4.72a.75.75 0 1 1 1.06 1.06L11.06 10l4.72 4.72a.75.75 0 1 1-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 0 1-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 0 1 0-1.06Z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="px-6 py-6">
-                        <livewire:cobros.forms.register-payment-form
-                            :installment="$paymentModalInstallment"
-                            :key="'register-payment-'.$paymentModalInstallment->id.'-'.$registerPaymentModalNonce"
-                        />
                     </div>
                 </div>
             </div>

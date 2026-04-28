@@ -82,6 +82,7 @@ class Show extends Component
             return;
         }
 
+        $this->selectInstallment($installmentId);
         $this->paymentModalInstallmentId = $installment->id;
         $this->registerPaymentModalNonce++;
         $this->isRegisterPaymentModalOpen = true;

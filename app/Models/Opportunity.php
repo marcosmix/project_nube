@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\Sales\OpportunitySource;
+use App\Enums\Sales\OpportunityStatus;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Opportunity extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'client_id',
+        'responsible_user_id',
+        'name',
+        'status',
+        'source',
+        'first_contact_at',
+        'contact_name',
+        'contact_phone',
+        'contact_email',
+        'contact_handle',
+        'initial_message',
+    ];
+
+    protected $casts = [
+        'status' => OpportunityStatus::class,
+        'source' => OpportunitySource::class,
+        'first_contact_at' => 'date',
+    ];
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function responsibleUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_user_id');
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(OpportunityNote::class)->latest();
+    }
+
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(OpportunityStatusLog::class)->latest('created_at');
+    }
+
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
+    }
+
+    public function scopeSearch($query, ?string $term)
+    {
+        if (! $term) {
+            return $query;
+        }
+
+        return $query->where(function ($innerQuery) use ($term) {
+            $innerQuery
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('contact_name', 'like', "%{$term}%")
+                ->orWhere('contact_email', 'like', "%{$term}%")
+                ->orWhere('contact_phone', 'like', "%{$term}%")
+                ->orWhereHas('client', function ($clientQuery) use ($term) {
+                    $clientQuery
+                        ->where('organization_name', 'like', "%{$term}%")
+                        ->orWhereHas('contact', fn ($contactQuery) => $contactQuery
+                            ->where('first_name', 'like', "%{$term}%")
+                            ->orWhere('last_name', 'like', "%{$term}%"));
+                });
+        });
+    }
+
+    public function getDisplayContactAttribute(): string
+    {
+        if ($this->contact_name) {
+            return $this->contact_name;
+        }
+
+        if ($this->client?->contact) {
+            return trim($this->client->contact->first_name.' '.$this->client->contact->last_name);
+        }
+
+        return 'Sin contacto';
+    }
+}

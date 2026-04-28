@@ -13,10 +13,13 @@ use Livewire\Component;
 class Show extends Component
 {
     public Project $project;
-    private array $allowedStatuses = ['prospection','interested','sale_closed','execution','paused','finished'];
-    private array $progressionOrder = ['prospection','interested','sale_closed','execution','finished'];
+
+    private array $allowedStatuses = ['prospection', 'interested', 'sale_closed', 'execution', 'paused', 'finished'];
+
+    private array $progressionOrder = ['prospection', 'interested', 'sale_closed', 'execution', 'finished'];
 
     public array $form = [];
+
     public array $selectedDevelopers = [];
 
     public function mount(Project $project): void
@@ -44,7 +47,6 @@ class Show extends Component
             'proposal_url' => $this->project->proposal_url,
             'excel_url' => $this->project->excel_url,
             'total_cost' => $this->project->total_cost,
-            'installments' => $this->project->installments,
             'estimated_start_date' => optional($this->project->estimated_start_date)->format('Y-m-d'),
             'estimated_end_date' => optional($this->project->estimated_end_date)->format('Y-m-d'),
 
@@ -80,16 +82,20 @@ class Show extends Component
             return;
         }
 
-        if (!in_array($status, $this->allowedStatuses, true)) {
+        if (! in_array($status, $this->allowedStatuses, true)) {
             return;
         }
 
-        if (!$this->canTransitionTo($status)) {
-            $this->dispatch('toast', type: 'error', message: 'No puedes volver a un estado anterior salvo desde "Frenado".');
+        $blockReason = $this->transitionBlockReason($status);
+
+        if ($blockReason !== null) {
+            $this->dispatch('toast', type: 'error', message: $blockReason);
+
             return;
         }
 
         $oldStatus = $currentStatus;
+        $financialLocked = $this->isFinancialLocked($currentStatus);
 
         $this->form['status'] = $status;
         $this->updatedFormStatus($status);
@@ -99,6 +105,11 @@ class Show extends Component
             'execution_sub_status' => $status === 'execution' ? ($this->form['execution_sub_status'] ?? null) : null,
             'pause_reason' => $status === 'paused' ? ($this->form['pause_reason'] ?? null) : null,
             'paused_at' => $status === 'paused' ? now() : null,
+            'proposal_url' => $financialLocked ? $this->project->proposal_url : ($this->form['proposal_url'] ?? null),
+            'excel_url' => $financialLocked ? $this->project->excel_url : ($this->form['excel_url'] ?? null),
+            'total_cost' => $financialLocked ? $this->project->total_cost : ($this->form['total_cost'] ?? null),
+            'estimated_start_date' => $financialLocked ? $this->project->estimated_start_date : ($this->form['estimated_start_date'] ?? null),
+            'estimated_end_date' => $financialLocked ? $this->project->estimated_end_date : ($this->form['estimated_end_date'] ?? null),
         ]);
 
         if ($oldStatus !== $status) {
@@ -111,39 +122,113 @@ class Show extends Component
 
     public function canTransitionTo(string $targetStatus): bool
     {
+        return $this->transitionBlockReason($targetStatus) === null;
+    }
+
+    public function currentStateIndex(): int
+    {
+        return array_search($this->project->status->value, $this->progressionOrder, true) ?: 0;
+    }
+
+    public function nextStatus(): ?string
+    {
+        $currentIdx = $this->currentStateIndex();
+
+        if ($currentIdx >= count($this->progressionOrder) - 1) {
+            return null;
+        }
+
+        return $this->progressionOrder[$currentIdx + 1];
+    }
+
+    public function previousStatus(): ?string
+    {
+        $currentIdx = $this->currentStateIndex();
+
+        if ($currentIdx <= 0) {
+            return null;
+        }
+
+        return $this->progressionOrder[$currentIdx - 1];
+    }
+
+    public function nextStatusLabel(): ?string
+    {
+        $next = $this->nextStatus();
+
+        return $next ? $this->getStatusLabel($next) : null;
+    }
+
+    public function previousStatusLabel(): ?string
+    {
+        $prev = $this->previousStatus();
+
+        return $prev ? $this->getStatusLabel($prev) : null;
+    }
+
+    private function getStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'prospection' => 'En Prospección',
+            'interested' => 'Interesado',
+            'sale_closed' => 'Venta Cerrada',
+            'execution' => 'En Ejecución',
+            'paused' => 'Frenado',
+            'finished' => 'Finalizado',
+            default => ucfirst($status),
+        };
+    }
+
+    public function transitionBlockReason(string $targetStatus): ?string
+    {
         $currentStatus = $this->project->status->value;
 
-        if (!in_array($targetStatus, $this->allowedStatuses, true)) {
-            return false;
+        if (! in_array($targetStatus, $this->allowedStatuses, true)) {
+            return 'El estado solicitado no es válido.';
         }
 
         if ($currentStatus === 'finished') {
-            return $targetStatus === 'finished';
+            return $targetStatus === 'finished'
+                ? null
+                : 'Un proyecto finalizado ya no puede cambiar de estado.';
         }
 
         if ($targetStatus === $currentStatus) {
-            return true;
+            return null;
+        }
+
+        if ($targetStatus === 'sale_closed' && (int) ($this->form['total_cost'] ?? 0) <= 0) {
+            return 'Para pasar a "Venta Cerrada" debes cargar antes el costo total en Información de Contratación.';
         }
 
         // Frenado es dinámico: desde/hacia paused se permite.
         if ($targetStatus === 'paused' || $currentStatus === 'paused') {
-            return true;
+            return null;
         }
 
         $from = array_search($currentStatus, $this->progressionOrder, true);
         $to = array_search($targetStatus, $this->progressionOrder, true);
 
         if ($from === false || $to === false) {
-            return false;
+            return 'No se pudo determinar la transición de estado.';
         }
 
-        // Solo avance, no retroceso.
-        return $to >= $from;
+        // Solo al estado siguiente inmediato (no saltos)
+        if ($to !== $from + 1) {
+            return 'Solo puedes avanzar al siguiente estado.';
+        }
+
+        // Solo avanzar, no retroceder (excepto desde paused)
+        if ($to < $from) {
+            return 'No puedes volver a un estado anterior.';
+        }
+
+        return null;
     }
 
     private function isFinancialLocked(string $status): bool
     {
-        return in_array($status, ['sale_closed','execution','paused','finished'], true);
+        return in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true);
     }
 
     // Listas para selects (simple y efectivo)
@@ -163,41 +248,40 @@ class Show extends Component
     private function rulesFor(string $status): array
     {
         $base = [
-            'form.name' => ['required','string','max:255'],
-            'form.client_id' => ['required','exists:clients,id'],
-            'form.status' => ['required','in:prospection,interested,sale_closed,execution,paused,finished'],
-            'form.prospection_notes' => ['nullable','string'],
+            'form.name' => ['required', 'string', 'max:255'],
+            'form.client_id' => ['required', 'exists:clients,id'],
+            'form.status' => ['required', 'in:prospection,interested,sale_closed,execution,paused,finished'],
+            'form.prospection_notes' => ['nullable', 'string'],
         ];
 
         if ($status !== 'prospection') {
             $base += [
-                'form.total_cost' => ['nullable','integer','min:0'],
-                'form.installments' => ['nullable','integer','min:1','max:60'],
-                'form.estimated_start_date' => ['nullable','date'],
-                'form.estimated_end_date' => ['nullable','date','after_or_equal:form.estimated_start_date'],
-                'form.proposal_url' => ['nullable','url'],
-                'form.excel_url' => ['nullable','url'],
+                'form.total_cost' => ['nullable', 'integer', 'min:0'],
+                'form.estimated_start_date' => ['nullable', 'date'],
+                'form.estimated_end_date' => ['nullable', 'date', 'after_or_equal:form.estimated_start_date'],
+                'form.proposal_url' => ['nullable', 'url'],
+                'form.excel_url' => ['nullable', 'url'],
             ];
         }
 
-        if (in_array($status, ['sale_closed','execution','paused','finished'], true)) {
+        if (in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true)) {
             $base['selectedDevelopers'] = ['array'];
             $base['selectedDevelopers.*'] = ['exists:developers,id'];
         }
 
-        if (in_array($status, ['execution','paused','finished'], true)) {
+        if (in_array($status, ['execution', 'paused', 'finished'], true)) {
             $base += [
-                'form.sprint_close_day' => ['nullable','integer','min:1','max:31'],
-                'form.actual_start_date' => ['nullable','date'],
+                'form.sprint_close_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+                'form.actual_start_date' => ['nullable', 'date'],
             ];
         }
 
         if ($status === 'execution') {
-            $base['form.execution_sub_status'] = ['nullable','in:on_track,with_debt,delayed'];
+            $base['form.execution_sub_status'] = ['nullable', 'in:on_track,with_debt,delayed'];
         }
 
         if ($status === 'paused') {
-            $base['form.pause_reason'] = ['required','string','min:3'];
+            $base['form.pause_reason'] = ['required', 'string', 'min:3'];
         }
 
         return $base;
@@ -234,7 +318,6 @@ class Show extends Component
             'proposal_url' => $financialLocked ? $this->project->proposal_url : ($this->form['proposal_url'] ?? null),
             'excel_url' => $financialLocked ? $this->project->excel_url : ($this->form['excel_url'] ?? null),
             'total_cost' => $financialLocked ? $this->project->total_cost : ($this->form['total_cost'] ?? null),
-            'installments' => $financialLocked ? $this->project->installments : ($this->form['installments'] ?? null),
             'estimated_start_date' => $financialLocked ? $this->project->estimated_start_date : ($this->form['estimated_start_date'] ?? null),
             'estimated_end_date' => $financialLocked ? $this->project->estimated_end_date : ($this->form['estimated_end_date'] ?? null),
 
@@ -246,7 +329,7 @@ class Show extends Component
         ]);
 
         // Equipo solo desde venta cerrada en adelante
-        if (in_array($status, ['sale_closed','execution','paused','finished'], true)) {
+        if (in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true)) {
             $this->project->developers()->sync($this->selectedDevelopers);
         } else {
             $this->project->developers()->sync([]);

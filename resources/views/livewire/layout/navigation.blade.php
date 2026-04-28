@@ -3,7 +3,8 @@
 use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component
+{
     /**
      * Log the current user out of the application.
      */
@@ -33,9 +34,14 @@ new class extends Component {
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('ventas.index')" :active="request()->routeIs('ventas.*')" wire:navigate>
+                        {{ __('Ventas') }}
+                    </x-nav-link>
+
                     <x-nav-link :href="route('proyectos.index')" :active="request()->routeIs('proyectos.*')" wire:navigate>
                         {{ __('Proyectos') }}
                     </x-nav-link>
+
                       <x-nav-link :href="route('cobros.index')" :active="request()->routeIs('cobros.*')" wire:navigate>
                         {{ __('Cobros') }}
                     </x-nav-link>
@@ -107,6 +113,10 @@ new class extends Component {
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('ventas.index')" :active="request()->routeIs('ventas.*')" wire:navigate>
+                {{ __('Ventas') }}
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('proyectos.index')" :active="request()->routeIs('proyectos.*')" wire:navigate>

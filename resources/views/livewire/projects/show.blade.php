@@ -29,8 +29,23 @@
     $currentIndex = array_search($status, $order, true);
     if ($currentIndex === false) $currentIndex = -1;
 
+    $prevStatus = $this->previousStatus();
+    $nextStatus = $this->nextStatus();
+    $prevLabel = $this->previousStatusLabel();
+    $nextLabel = $this->nextStatusLabel();
+
+    $prevBlocked = $prevStatus ? $this->transitionBlockReason($prevStatus) : null;
+    $nextBlocked = $nextStatus ? $this->transitionBlockReason($nextStatus) : null;
+    $canGoPrev = $prevStatus && $prevBlocked === null;
+    $canGoNext = $nextStatus && $nextBlocked === null;
+
     $client = $project->client;
     $contact = $client?->contact;
+    
+    $alertMessage = null;
+    if ($nextStatus && !$canGoNext) {
+        $alertMessage = $nextBlocked;
+    }
 @endphp
 
 <x-slot name="header">
@@ -50,39 +65,40 @@
 
 <div class="py-8">
     <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Estado:</span>
-                <select
-                        x-on:change="
-                            const next = $event.target.value;
-                            if (next === '{{ $status }}') return;
-                            if (confirm('Se cambiará el estado del proyecto. ¿Deseas continuar?')) {
-                                $wire.changeStatus(next);
-                            } else {
-                                $event.target.value = '{{ $status }}';
-                            }
-                        "
-                        @disabled($isFinished)
-                        class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
-                    <option value="prospection" @selected($status === 'prospection') @disabled(!$this->canTransitionTo('prospection'))>En Prospección</option>
-                    <option value="interested" @selected($status === 'interested') @disabled(!$this->canTransitionTo('interested'))>Interesado</option>
-                    <option value="sale_closed" @selected($status === 'sale_closed') @disabled(!$this->canTransitionTo('sale_closed'))>Venta Cerrada</option>
-                    <option value="execution" @selected($status === 'execution') @disabled(!$this->canTransitionTo('execution'))>En Ejecución</option>
-                    <option value="paused" @selected($status === 'paused') @disabled(!$this->canTransitionTo('paused'))>Frenado</option>
-                    <option value="finished" @selected($status === 'finished') @disabled(!$this->canTransitionTo('finished'))>Finalizado</option>
-                </select>
+                @if($prevStatus)
+                    <button
+                        wire:click="changeStatus('{{ $prevStatus }}')"
+                        @disabled($isFinished || !$canGoPrev)
+                        class="rounded-lg border px-4 py-2 text-sm disabled:cursor-not-allowed {{ $isFinished || !$canGoPrev ? 'border-gray-200 bg-gray-100 text-gray-500' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' }}"
+                        title="{{ $prevBlocked ?? 'Ir al estado anterior' }}"
+                    >
+                        ← {{ $prevLabel ?? 'Anterior' }}
+                    </button>
+                @endif
             </div>
 
-            <button wire:click="save"
-                    @disabled($isFinished)
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                Guardar otros cambios
-            </button>
+            <div class="flex items-center gap-2">
+                @if($nextStatus)
+                    <button
+                        wire:click="changeStatus('{{ $nextStatus }}')"
+                        @disabled($isFinished || !$canGoNext)
+                        class="rounded-lg px-4 py-2 text-sm disabled:cursor-not-allowed {{ $isFinished || !$canGoNext ? 'bg-gray-200 text-gray-600' : 'bg-green-600 text-white hover:bg-green-700' }}"
+                        title="{{ $nextBlocked ?? 'Avanzar al siguiente estado' }}"
+                    >
+                        {{ $nextLabel ?? 'Siguiente' }} →
+                    </button>
+                @endif
+            </div>
         </div>
-        <div class="text-right text-xs text-gray-500">
-            El estado se guarda automáticamente al cambiarlo.
-        </div>
+
+        @if($alertMessage)
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div class="font-medium">No puedes avanzar</div>
+                <div class="mt-1">{{ $alertMessage }}</div>
+            </div>
+        @endif
 
         {{-- HEADER CARD --}}
         <div class="overflow-hidden rounded-2xl border-2 {{ $cfg['border'] }} bg-white shadow-sm">
@@ -223,11 +239,15 @@
                 {{-- FINANCIAL (desde Interested) --}}
                 @if($status !== 'prospection')
                     <div class="rounded-2xl border p-6 shadow-sm {{ $cardTone }}">
-                        <div class="mb-4 text-xl text-gray-900">Información Financiera</div>
+                        <div class="mb-4 text-xl text-gray-900">Información de Contratación</div>
                         <div class="h-px bg-gray-100 mb-4"></div>
                         @if($isFinancialLocked)
                             <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                                Información financiera bloqueada desde "Venta Cerrada".
+                                Esta información queda bloqueada desde "Venta Cerrada" y el monto se reutiliza al crear un flujo de cobro.
+                            </div>
+                        @else
+                            <div class="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
+                                Cargá el costo total antes de pasar a "Venta Cerrada".
                             </div>
                         @endif
 
@@ -239,15 +259,7 @@
                                        @disabled($isFinished || $isFinancialLocked)
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50"
                                        placeholder="450000" />
-                            </div>
-
-                            <div>
-                                <div class="text-sm text-gray-600">Cantidad de Cuotas</div>
-                                <input type="number"
-                                       wire:model.defer="form.installments"
-                                       @disabled($isFinished || $isFinancialLocked)
-                                       class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50"
-                                       placeholder="8" />
+                                @error('form.total_cost') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
@@ -256,6 +268,7 @@
                                        wire:model.defer="form.estimated_start_date"
                                        @disabled($isFinished || $isFinancialLocked)
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50" />
+                                @error('form.estimated_start_date') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
@@ -264,6 +277,7 @@
                                        wire:model.defer="form.estimated_end_date"
                                        @disabled($isFinished || $isFinancialLocked)
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50" />
+                                @error('form.estimated_end_date') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="md:col-span-2">
@@ -272,6 +286,7 @@
                                        @disabled($isFinished || $isFinancialLocked)
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50"
                                        placeholder="https://drive.google.com/..." />
+                                @error('form.proposal_url') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="md:col-span-2">
@@ -280,6 +295,7 @@
                                        @disabled($isFinished || $isFinancialLocked)
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50"
                                        placeholder="https://docs.google.com/spreadsheets/..." />
+                                @error('form.excel_url') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
                         </div>
                     </div>

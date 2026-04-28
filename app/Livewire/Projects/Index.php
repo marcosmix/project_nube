@@ -2,8 +2,6 @@
 
 namespace App\Livewire\Projects;
 
-use App\Enums\ExecutionSubStatus;
-use App\Enums\ProjectStatus;
 use App\Models\Client;
 use App\Models\Developer;
 use App\Models\Project;
@@ -17,6 +15,7 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $statusFilter = 'all';
 
     public bool $showCreateModal = false;
@@ -33,7 +32,6 @@ class Index extends Component
         'proposal_url' => null,
         'excel_url' => null,
         'total_cost' => null,
-        'installments' => null,
         'estimated_start_date' => null,
         'estimated_end_date' => null,
 
@@ -45,8 +43,15 @@ class Index extends Component
 
     public array $selectedDevelopers = [];
 
-    public function updatedSearch() { $this->resetPage(); }
-    public function updatedStatusFilter() { $this->resetPage(); }
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
 
     public function openCreate(): void
     {
@@ -71,7 +76,6 @@ class Index extends Component
             'proposal_url' => null,
             'excel_url' => null,
             'total_cost' => null,
-            'installments' => null,
             'estimated_start_date' => null,
             'estimated_end_date' => null,
             'sprint_close_day' => null,
@@ -85,41 +89,40 @@ class Index extends Component
     private function rulesFor(string $status): array
     {
         $base = [
-            'form.name' => ['required','string','max:255'],
-            'form.client_id' => ['required','exists:clients,id'],
-            'form.status' => ['required','in:prospection,interested,sale_closed,execution,paused,finished'],
-            'form.prospection_notes' => ['nullable','string'],
+            'form.name' => ['required', 'string', 'max:255'],
+            'form.client_id' => ['required', 'exists:clients,id'],
+            'form.status' => ['required', 'in:prospection,interested,sale_closed,execution,paused,finished'],
+            'form.prospection_notes' => ['nullable', 'string'],
         ];
 
         if ($status !== 'prospection') {
             $base += [
-                'form.total_cost' => ['nullable','integer','min:0'],
-                'form.installments' => ['nullable','integer','min:1','max:60'],
-                'form.estimated_start_date' => ['nullable','date'],
-                'form.estimated_end_date' => ['nullable','date','after_or_equal:form.estimated_start_date'],
-                'form.proposal_url' => ['nullable','url'],
-                'form.excel_url' => ['nullable','url'],
+                'form.total_cost' => ['nullable', 'integer', 'min:0'],
+                'form.estimated_start_date' => ['nullable', 'date'],
+                'form.estimated_end_date' => ['nullable', 'date', 'after_or_equal:form.estimated_start_date'],
+                'form.proposal_url' => ['nullable', 'url'],
+                'form.excel_url' => ['nullable', 'url'],
             ];
         }
 
-        if (in_array($status, ['sale_closed','execution','paused','finished'], true)) {
+        if (in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true)) {
             $base['selectedDevelopers'] = ['array'];
             $base['selectedDevelopers.*'] = ['exists:developers,id'];
         }
 
-        if (in_array($status, ['execution','paused','finished'], true)) {
+        if (in_array($status, ['execution', 'paused', 'finished'], true)) {
             $base += [
-                'form.sprint_close_day' => ['nullable','integer','min:1','max:31'],
-                'form.actual_start_date' => ['nullable','date'],
+                'form.sprint_close_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+                'form.actual_start_date' => ['nullable', 'date'],
             ];
         }
 
         if ($status === 'execution') {
-            $base['form.execution_sub_status'] = ['nullable','in:on_track,with_debt,delayed'];
+            $base['form.execution_sub_status'] = ['nullable', 'in:on_track,with_debt,delayed'];
         }
 
         if ($status === 'paused') {
-            $base['form.pause_reason'] = ['required','string','min:3'];
+            $base['form.pause_reason'] = ['required', 'string', 'min:3'];
         }
 
         return $base;
@@ -146,7 +149,6 @@ class Index extends Component
             'proposal_url' => null,
             'excel_url' => null,
             'total_cost' => null,
-            'installments' => null,
             'estimated_start_date' => null,
             'estimated_end_date' => null,
 
@@ -183,15 +185,15 @@ class Index extends Component
     {
         return Developer::query()
             ->with('contact')
-            ->where('status','active')
-            ->orderBy('id','desc')
+            ->where('status', 'active')
+            ->orderBy('id', 'desc')
             ->get();
     }
 
     public function render()
     {
         $projects = Project::query()
-            ->with(['client.contact','developers.contact'])
+            ->with(['client.contact', 'developers.contact'])
             ->search($this->search)
             ->statusFilter($this->statusFilter)
             ->latest()
