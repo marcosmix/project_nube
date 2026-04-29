@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentFlow;
 use App\Models\PaymentReceipt;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class PaymentReceiptController extends Controller
 {
-    public function preview(PaymentFlow $paymentFlow, PaymentReceipt $receipt): BinaryFileResponse
+    public function preview(PaymentFlow $paymentFlow, PaymentReceipt $receipt): Response
     {
         $receipt->loadMissing('payment.installment');
 
@@ -28,7 +28,7 @@ class PaymentReceiptController extends Controller
         ]);
     }
 
-    public function download(PaymentFlow $paymentFlow, PaymentReceipt $receipt): BinaryFileResponse
+    public function download(PaymentFlow $paymentFlow, PaymentReceipt $receipt): Response
     {
         $receipt->loadMissing('payment.installment');
 
@@ -39,9 +39,10 @@ class PaymentReceiptController extends Controller
 
         abort_unless($disk->exists($receipt->path), 404);
 
-        return $disk->download($receipt->path, $receipt->original_name, [
-            'Content-Type' => $receipt->mime_type ?: ($disk->mimeType($receipt->path) ?: 'application/octet-stream'),
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return response()->download(
+            $disk->path($receipt->path),
+            $receipt->original_name,
+            ['Content-Type' => $receipt->mime_type ?: 'application/octet-stream']
+        );
     }
 }
