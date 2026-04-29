@@ -157,13 +157,13 @@
 
     @if($showCreateModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div class="w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
                 <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
                     <div>
-                        <h3 class="text-lg font-semibold text-slate-900">Nueva oportunidad</h3>
+                        <h3 class="text-lg font-semibold text-slate-950">Nueva oportunidad</h3>
                         <p class="text-sm text-slate-500">Primero registrá la consulta y después resolvé si se vincula o crea un cliente.</p>
                     </div>
-                    <button type="button" wire:click="closeCreate" class="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100">Cerrar</button>
+                    <button type="button" wire:click="closeCreate" class="rounded-2xl px-3 py-2 text-slate-500 transition hover:bg-slate-100">Cerrar</button>
                 </div>
 
                 <div class="border-b border-slate-200 px-6 py-4">
@@ -185,57 +185,57 @@
                     @if($createStep === 1)
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <label class="text-sm text-slate-600">Referencia de consulta *</label>
-                                <input wire:model.defer="createForm.name" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2" />
+                                <x-ui.label>Referencia de consulta *</x-ui.label>
+                                <x-ui.input wire:model.defer="createForm.name" />
                                 @error('createForm.name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-slate-600">Fecha de primer contacto</label>
-                                <input type="date" wire:model.defer="createForm.first_contact_at" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2" />
+                                <x-ui.label>Fecha de primer contacto</x-ui.label>
+                                <x-ui.input type="date" wire:model.defer="createForm.first_contact_at" />
                                 @error('createForm.first_contact_at') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-slate-600">Origen *</label>
-                                <select wire:model.defer="createForm.source" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2">
+                                <x-ui.label>Origen *</x-ui.label>
+                                <x-ui.select wire:model.defer="createForm.source">
                                     @foreach($sourceOptions as $sourceOption)
                                         <option value="{{ $sourceOption['value'] }}">{{ $sourceOption['label'] }}</option>
                                     @endforeach
-                                </select>
+                                </x-ui.select>
                                 @error('createForm.source') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-slate-600">Estado inicial *</label>
-                                <select wire:model.defer="createForm.status" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2">
+                                <x-ui.label>Estado inicial *</x-ui.label>
+                                <x-ui.select wire:model.defer="createForm.status">
                                     @foreach($initialStatusOptions as $statusOption)
                                         <option value="{{ $statusOption['value'] }}">{{ $statusOption['label'] }}</option>
                                     @endforeach
-                                </select>
+                                </x-ui.select>
                                 @error('createForm.status') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-slate-600">Responsable</label>
-                                <select wire:model.defer="createForm.responsible_user_id" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2">
+                                <x-ui.label>Responsable</x-ui.label>
+                                <x-ui.select wire:model.defer="createForm.responsible_user_id">
                                     <option value="">Asignarme automáticamente</option>
                                     @foreach($this->users as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
-                                </select>
+                                </x-ui.select>
                                 @error('createForm.responsible_user_id') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="text-sm text-slate-600">Mensaje inicial</label>
-                                <textarea wire:model.defer="createForm.initial_message" rows="4" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2"></textarea>
+                                <x-ui.label>Mensaje inicial</x-ui.label>
+                                <x-ui.textarea wire:model.defer="createForm.initial_message" rows="4"></x-ui.textarea>
                                 @error('createForm.initial_message') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="text-sm text-slate-600">Notas comerciales</label>
-                                <textarea wire:model.defer="createForm.initial_note" rows="4" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2"></textarea>
+                                <x-ui.label>Notas comerciales</x-ui.label>
+                                <x-ui.textarea wire:model.defer="createForm.initial_note" rows="4"></x-ui.textarea>
                                 @error('createForm.initial_note') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -249,90 +249,90 @@
                         @endphp
                         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
                             <div class="space-y-6">
-                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                                <div class="mb-4 text-base font-semibold text-slate-900">Datos de referencia</div>
-                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <x-ui.panel tone="subtle">
+                                    <div class="mb-4 text-base font-semibold text-slate-900">Datos de referencia</div>
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
-                                        <label class="text-sm text-slate-600">Nombre de referencia</label>
-                                        <input wire:model.live.debounce.250ms="createForm.contact_name" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900" />
+                                        <x-ui.label>Nombre de referencia</x-ui.label>
+                                        <x-ui.input wire:model.live.debounce.250ms="createForm.contact_name" />
                                         @error('createForm.contact_name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                     </div>
 
                                     <div>
-                                        <label class="text-sm text-slate-600">Teléfono de referencia</label>
-                                        <input wire:model.live.debounce.250ms="createForm.contact_phone" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900" />
+                                        <x-ui.label>Teléfono de referencia</x-ui.label>
+                                        <x-ui.input wire:model.live.debounce.250ms="createForm.contact_phone" />
                                         @error('createForm.contact_phone') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                     </div>
 
                                     <div>
-                                        <label class="text-sm text-slate-600">Email de referencia</label>
-                                        <input wire:model.live.debounce.250ms="createForm.contact_email" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900" />
+                                        <x-ui.label>Email de referencia</x-ui.label>
+                                        <x-ui.input wire:model.live.debounce.250ms="createForm.contact_email" />
                                         @error('createForm.contact_email') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                     </div>
 
                                     <div>
-                                        <label class="text-sm text-slate-600">Usuario / red social de referencia</label>
-                                        <input wire:model.live.debounce.250ms="createForm.contact_handle" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900" />
+                                        <x-ui.label>Usuario / red social de referencia</x-ui.label>
+                                        <x-ui.input wire:model.live.debounce.250ms="createForm.contact_handle" />
                                         @error('createForm.contact_handle') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                     </div>
-                                </div>
+                                </x-ui.panel>
                             </div>
 
-                                <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                                <x-ui.panel>
                                     <div class="mb-4 text-base font-semibold text-slate-900">Resolución de cliente</div>
                                     <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                                    <label class="rounded-xl border px-4 py-4 {{ $createForm['client_mode'] === 'unlinked' ? 'border-sky-300 bg-sky-50' : 'border-slate-200 bg-white' }}">
+                                    <x-ui.radio-card :checked="$createForm['client_mode'] === 'unlinked'">
                                         <input type="radio" wire:model.live="createForm.client_mode" value="unlinked" class="sr-only">
                                         <div class="text-sm font-medium text-slate-900">Sin vincular</div>
                                         <div class="mt-1 text-xs text-slate-500">La oportunidad queda abierta sin cliente asociado por ahora.</div>
-                                    </label>
+                                    </x-ui.radio-card>
 
-                                    <label class="rounded-xl border px-4 py-4 {{ $createForm['client_mode'] === 'link_existing' ? 'border-sky-300 bg-sky-50' : 'border-slate-200 bg-white' }}">
+                                    <x-ui.radio-card :checked="$createForm['client_mode'] === 'link_existing'">
                                         <input type="radio" wire:model.live="createForm.client_mode" value="link_existing" class="sr-only">
                                         <div class="text-sm font-medium text-slate-900">Vincular cliente existente</div>
                                         <div class="mt-1 text-xs text-slate-500">Usá un cliente ya cargado en el sistema.</div>
-                                    </label>
+                                    </x-ui.radio-card>
 
-                                    <label class="rounded-xl border px-4 py-4 {{ $createForm['client_mode'] === 'create_new' ? 'border-sky-300 bg-sky-50' : 'border-slate-200 bg-white' }}">
+                                    <x-ui.radio-card :checked="$createForm['client_mode'] === 'create_new'">
                                         <input type="radio" wire:model.live="createForm.client_mode" value="create_new" class="sr-only">
                                         <div class="text-sm font-medium text-slate-900">Crear cliente nuevo</div>
                                         <div class="mt-1 text-xs text-slate-500">Aprovechá los datos de referencia y completá solo lo requerido.</div>
-                                    </label>
+                                    </x-ui.radio-card>
                                     </div>
 
                                     @if($createForm['client_mode'] === 'link_existing')
                                         <div class="mt-5">
-                                            <label class="text-sm text-slate-600">Cliente existente</label>
-                                            <select wire:model.live="createForm.client_id" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900">
+                                            <x-ui.label>Cliente existente</x-ui.label>
+                                            <x-ui.select wire:model.live="createForm.client_id">
                                                 <option value="">Seleccioná un cliente</option>
                                                 @foreach($this->clients as $client)
                                                     <option value="{{ $client->id }}">
                                                         {{ $client->organization_name }}{{ $client->contact ? ' · '.$client->contact->full_name : '' }}
                                                     </option>
                                                 @endforeach
-                                            </select>
+                                            </x-ui.select>
                                             @error('createForm.client_id') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
                                     @endif
 
                                     @if($createForm['client_mode'] === 'create_new')
-                                        <div class="mt-5 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-950">
+                                        <x-ui.panel tone="success" padding="sm" class="mt-5 text-sm text-emerald-950 shadow-none">
                                             Los datos de teléfono y email se completan con la referencia si estaban vacíos. Nombre y apellido se cargan manualmente para evitar errores.
-                                            <button type="button" wire:click="fillNewClientFromReference" class="ml-2 inline-flex rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-800">
+                                            <x-ui.button type="button" size="sm" variant="success" wire:click="fillNewClientFromReference" class="ml-2">
                                                 Usar datos de referencia
-                                            </button>
-                                        </div>
+                                            </x-ui.button>
+                                        </x-ui.panel>
 
                                         <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <div>
-                                            <label class="text-sm text-slate-600">Nombre *</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_first_name" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Nombre *</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_first_name" />
                                             @error('createForm.new_client_first_name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
                                         <div>
-                                            <label class="text-sm text-slate-600">Apellido *</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_last_name" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Apellido *</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_last_name" />
                                             @error('createForm.new_client_last_name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
@@ -342,46 +342,46 @@
                                         </div>
 
                                         <div>
-                                            <label class="text-sm text-slate-600">Email *</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_email" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Email *</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_email" />
                                             @error('createForm.new_client_email') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
                                         <div>
-                                            <label class="text-sm text-slate-600">Teléfono</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_phone" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Teléfono</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_phone" />
                                             @error('createForm.new_client_phone') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
                                         <div>
-                                            <label class="text-sm text-slate-600">Nombre de empresa *</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_organization_name" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Nombre de empresa *</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_organization_name" />
                                             @error('createForm.new_client_organization_name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
                                         <div>
-                                            <label class="text-sm text-slate-600">Tamaño *</label>
-                                            <select wire:model.live="createForm.new_client_company_size" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900">
+                                            <x-ui.label>Tamaño *</x-ui.label>
+                                            <x-ui.select wire:model.live="createForm.new_client_company_size">
                                                 <option value="small">Pequeña</option>
                                                 <option value="medium">Mediana</option>
                                                 <option value="large">Grande</option>
-                                            </select>
+                                            </x-ui.select>
                                             @error('createForm.new_client_company_size') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
 
                                         <div class="md:col-span-2">
-                                            <label class="text-sm text-slate-600">Industria</label>
-                                            <input wire:model.live.debounce.250ms="createForm.new_client_industry" class="mt-1 w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900" />
+                                            <x-ui.label>Industria</x-ui.label>
+                                            <x-ui.input wire:model.live.debounce.250ms="createForm.new_client_industry" />
                                             @error('createForm.new_client_industry') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
                                     @endif
-                                </div>
+                                </x-ui.panel>
 
                             </div>
 
                             <div class="space-y-6 xl:sticky xl:top-4 xl:self-start">
-                                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <x-ui.panel>
                                     <div class="mb-4 text-base font-semibold text-slate-900">Resumen de referencia</div>
                                     <div class="space-y-3 text-sm text-slate-700">
                                         <div>
@@ -401,10 +401,10 @@
                                             <div class="mt-1">{{ $referencePreview['handle'] !== '' ? $referencePreview['handle'] : '—' }}</div>
                                         </div>
                                     </div>
-                                </div>
+                                </x-ui.panel>
 
                                 @if($createForm['client_mode'] === 'link_existing')
-                                    <div class="rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
+                                    <x-ui.panel tone="info">
                                         <div class="mb-4 text-base font-semibold text-sky-950">Cliente vinculado</div>
                                         @if($selectedClientPreview)
                                             <div class="flex items-start gap-4">
@@ -449,11 +449,11 @@
                                                 Seleccioná un cliente para ver su ficha resumida sin editar.
                                             </div>
                                         @endif
-                                    </div>
+                                    </x-ui.panel>
                                 @endif
 
                                 @if($createForm['client_mode'] === 'create_new' && $newClientPreview)
-                                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                                    <x-ui.panel tone="success">
                                         <div class="mb-4 text-base font-semibold text-emerald-950">Cliente nuevo a crear</div>
                                         <div class="flex items-start gap-4">
                                             <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-200 text-lg font-semibold text-emerald-950">
@@ -490,7 +490,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </x-ui.panel>
                                 @endif
                             </div>
                         </div>
@@ -500,15 +500,15 @@
                 <div class="flex items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
                     <div>
                         @if($createStep === 2)
-                            <button type="button" wire:click="previousCreateStep" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">Volver</button>
+                            <x-ui.button type="button" variant="secondary" wire:click="previousCreateStep">Volver</x-ui.button>
                         @endif
                     </div>
                     <div class="flex items-center gap-3">
-                        <button type="button" wire:click="closeCreate" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">Cancelar</button>
+                        <x-ui.button type="button" variant="secondary" wire:click="closeCreate">Cancelar</x-ui.button>
                         @if($createStep === 1)
-                            <button type="button" wire:click="nextCreateStep" class="rounded-lg border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Continuar con cliente</button>
+                            <x-ui.button type="button" wire:click="nextCreateStep">Continuar con cliente</x-ui.button>
                         @else
-                            <button type="button" wire:click="create" class="rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800">Guardar oportunidad</button>
+                            <x-ui.button type="button" variant="success" wire:click="create">Guardar oportunidad</x-ui.button>
                         @endif
                     </div>
                 </div>
@@ -518,17 +518,17 @@
 
     @if($showNoteModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div class="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
                 <div class="border-b border-slate-200 px-6 py-4">
                     <h3 class="text-lg font-semibold text-slate-900">Agregar nota comercial</h3>
                 </div>
                 <div class="p-6">
-                    <textarea wire:model.defer="noteContent" rows="5" class="w-full rounded-lg border border-slate-200 px-4 py-2" placeholder="Ej: Cliente pidió seguimiento el jueves..."></textarea>
+                    <x-ui.textarea wire:model.defer="noteContent" rows="5" placeholder="Ej: Cliente pidió seguimiento el jueves..."></x-ui.textarea>
                     @error('noteContent') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                 </div>
                 <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
-                    <button type="button" wire:click="closeQuickNote" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cancelar</button>
-                    <button type="button" wire:click="saveQuickNote" class="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800">Guardar nota</button>
+                    <x-ui.button type="button" variant="secondary" wire:click="closeQuickNote">Cancelar</x-ui.button>
+                    <x-ui.button type="button" wire:click="saveQuickNote">Guardar nota</x-ui.button>
                 </div>
             </div>
         </div>

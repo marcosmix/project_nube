@@ -63,8 +63,8 @@
     </div>
 </x-slot>
 
-<div class="py-8">
-    <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+<x-ui.page-container>
+    <div class="space-y-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
                 @if($prevStatus)
@@ -388,4 +388,4 @@
         </div>
 
     </div>
-</div>
+</x-ui.page-container>

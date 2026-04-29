@@ -8,8 +8,8 @@
     </div>
 </x-slot>
 
-<div class="py-8">
-    <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+<x-ui.page-container>
+    <div class="space-y-6">
         @php
             $convertBlockedReason = $this->convertBlockedReason();
         @endphp
@@ -147,4 +147,4 @@
             </div>
         </div>
     </div>
-</div>
+</x-ui.page-container>

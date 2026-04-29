@@ -1,9 +1,13 @@
 <div class="space-y-6" wire:keydown.escape.window="handleEscape">
+    <x-ui.section-header
+        title="Flujo de cobro"
+        :description="'Proyecto: ' . ($flow->project?->name ?? 'Sin proyecto asociado')"
+        eyebrow="Cobros"
+    />
+
     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
-                <h1 class="text-2xl font-semibold text-slate-900">Flujo de cobro</h1>
-                <p class="text-sm text-slate-500">Proyecto: {{ $flow->project?->name }}</p>
                 <p class="text-sm text-slate-500">
                     Cliente:
                     {{ $flow->project?->client?->contact?->organization ??
@@ -112,33 +116,33 @@
             ></button>
 
             <div class="relative z-50 flex min-h-full justify-end">
-                <div class="w-full max-w-xl min-h-screen border-l border-slate-200 bg-white shadow-2xl" wire:click.stop>
+                <div class="min-h-screen w-full max-w-xl border-l border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70" wire:click.stop>
                     <div class="flex min-h-screen flex-col">
-                        <div class="sticky top-0 z-10 shrink-0 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
-                        <div>
-                            <h2 id="installment-drawer-title" class="text-2xl font-semibold text-slate-900">
-                                Cuota #{{ $selectedInstallment->number }}
-                            </h2>
-                            <p class="mt-1 text-sm text-slate-500">
-                                {{ $isRegisterPaymentModalOpen ? 'Registro de pago' : ($isVoidPaymentModalOpen ? 'Anulacion de pago' : 'Detalle e historial') }}
-                            </p>
-                        </div>
+                        <div class="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
+                            <div>
+                                <h2 id="installment-drawer-title" class="text-2xl font-semibold text-slate-900">
+                                    Cuota #{{ $selectedInstallment->number }}
+                                </h2>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    {{ $isRegisterPaymentModalOpen ? 'Registro de pago' : ($isVoidPaymentModalOpen ? 'Anulacion de pago' : 'Detalle e historial') }}
+                                </p>
+                            </div>
 
-                        <button
-                            type="button"
-                            wire:click="closeInstallmentDrawer"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                            aria-label="Cerrar panel lateral"
-                        >
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4.22 4.22a.75.75 0 0 1 1.06 0L10 8.94l4.72-4.72a.75.75 0 1 1 1.06 1.06L11.06 10l4.72 4.72a.75.75 0 1 1-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 0 1-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 0 1 0-1.06Z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </button>
-                    </div>
+                            <button
+                                type="button"
+                                wire:click="closeInstallmentDrawer"
+                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                                aria-label="Cerrar panel lateral"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M4.22 4.22a.75.75 0 0 1 1.06 0L10 8.94l4.72-4.72a.75.75 0 1 1 1.06 1.06L11.06 10l4.72 4.72a.75.75 0 1 1-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 0 1-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 0 1 0-1.06Z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
 
                         <div class="flex-1 px-6 py-6">
                             <div class="space-y-6 pb-6">
@@ -211,41 +215,25 @@
 
                                         <form wire:submit="voidPayment" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                             <div>
-                                                <label class="mb-1 block text-xs font-medium text-slate-600">Motivo de anulacion</label>
-                                                <textarea
-                                                    wire:model="voidReason"
-                                                    rows="5"
-                                                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-                                                    placeholder="Indicá por qué se anula el pago"
-                                                ></textarea>
+                                                <x-ui.label>Motivo de anulacion</x-ui.label>
+                                                <x-ui.textarea wire:model="voidReason" rows="5" placeholder="Indicá por qué se anula el pago"></x-ui.textarea>
                                                 @error('voidReason')
                                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                                 @enderror
                                             </div>
 
                                             <div class="flex flex-col-reverse gap-3">
-                                                <button
-                                                    type="button"
-                                                    wire:click="closeVoidPaymentModal"
-                                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                                                >
-                                                    Volver
-                                                </button>
+                                                <x-ui.button type="button" variant="secondary" wire:click="closeVoidPaymentModal">Volver</x-ui.button>
 
-                                                <button
-                                                    type="submit"
-                                                    wire:loading.attr="disabled"
-                                                    class="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
-                                                    style="background-color: white; border: 2px solid #be123c; color: #9f1239; font-weight: 600;"
-                                                >
+                                                <x-ui.button type="submit" variant="danger" wire:loading.attr="disabled" class="disabled:opacity-60">
                                                     <span wire:loading.remove wire:target="voidPayment">Confirmar anulacion</span>
                                                     <span wire:loading wire:target="voidPayment">Anulando...</span>
-                                                </button>
+                                                </x-ui.button>
                                             </div>
                                         </form>
                                     </section>
                                 @else
-                                    <section class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+                                    <x-ui.panel tone="subtle">
                                         <div class="mb-4 flex items-start justify-between gap-3">
                                             <div>
                                                 <h3 class="text-sm font-semibold text-slate-900">Resumen de la cuota</h3>
@@ -253,13 +241,13 @@
                                             </div>
 
                                             @if ($this->canRegisterPayment($selectedInstallment))
-                                                <button
+                                                <x-ui.button
                                                     type="button"
+                                                    variant="info"
                                                     wire:click="openRegisterPaymentModal({{ $selectedInstallment->id }})"
-                                                    class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
                                                 >
                                                     Agregar pago
-                                                </button>
+                                                </x-ui.button>
                                             @endif
                                         </div>
 
@@ -297,7 +285,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </section>
+                                    </x-ui.panel>
 
                                     <section class="space-y-3">
                                         <div>
@@ -307,7 +295,7 @@
 
                                         <div class="space-y-3">
                                             @forelse ($installmentTimeline as $item)
-                                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                <x-ui.panel padding="sm">
                                                     <div class="flex items-start justify-between gap-3">
                                                          <div class="min-w-0 flex-1">
                                                              <p class="text-sm font-medium text-slate-900">{{ $item['title'] }}</p>
@@ -383,12 +371,9 @@
                                                                                              </a>
                                                                                          @endif
 
-                                                                                         <a
-                                                                                             href="{{ $receipt['download_url'] }}"
-                                                                                             class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
-                                                                                         >
-                                                                                             Descargar
-                                                                                         </a>
+                                                                                          <a href="{{ $receipt['download_url'] }}" class="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-100">
+                                                                                              Descargar
+                                                                                          </a>
                                                                                      </div>
                                                                                  </div>
                                                                              </div>
@@ -405,17 +390,13 @@
                                                             </span>
 
                                                             @if (! empty($item['can_void']))
-                                                                <button
-                                                                    type="button"
-                                                                    wire:click="openVoidPaymentModal({{ $item['payment_id'] }})"
-                                                                    class="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-100"
-                                                                >
-                                                                    Anular pago
-                                                                </button>
-                                                            @endif
+                                                                 <x-ui.button type="button" size="sm" variant="danger" wire:click="openVoidPaymentModal({{ $item['payment_id'] }})">
+                                                                     Anular pago
+                                                                 </x-ui.button>
+                                                             @endif
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </x-ui.panel>
                                             @empty
                                                 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
                                                     Sin movimientos todavía.
@@ -425,12 +406,12 @@
                                     </section>
 
                                     @if (! $this->canRegisterPayment($selectedInstallment))
-                                        <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                                        <x-ui.panel tone="subtle">
                                             <h3 class="text-sm font-semibold text-slate-900">Registro de pagos</h3>
                                             <p class="mt-2 text-sm leading-6 text-slate-600">
                                                 Esta cuota no admite nuevos pagos porque no tiene saldo pendiente o el flujo está cancelado.
                                             </p>
-                                        </section>
+                                        </x-ui.panel>
                                     @endif
                                 @endif
                             </div>

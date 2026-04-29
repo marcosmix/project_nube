@@ -111,58 +111,58 @@
     >
         <div class="absolute inset-0 bg-black/40" @click="$wire.closeModal()"></div>
 
-        <div class="relative w-full max-w-3xl max-h-[90vh] rounded-2xl bg-white shadow-2xl border flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
+        <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
+            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                 <div>
-                    <h2 class="text-xl font-semibold text-gray-900">
+                    <h2 class="text-xl font-semibold text-slate-950">
                         {{ $clientId ? 'Editar cliente' : 'Nuevo cliente' }}
                     </h2>
-                    <p class="text-sm text-gray-600">Contacto + organización + evaluación interna.</p>
+                    <p class="text-sm text-slate-500">Contacto, organización y evaluación interna en una sola ficha.</p>
                 </div>
 
-                <button type="button" class="text-gray-500 hover:text-gray-700" wire:click="closeModal">✕</button>
+                <button type="button" class="rounded-2xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700" wire:click="closeModal">✕</button>
             </div>
 
             <form wire:submit.prevent="save" class="flex flex-col flex-1 min-h-0">
                 <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
                     {{-- Contacto --}}
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-900">Contacto</h3>
+                        <h3 class="text-sm font-semibold text-slate-950">Contacto</h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm text-gray-700">Nombre</label>
-                                <input wire:model.defer="first_name" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Nombre</x-ui.label>
+                                <x-ui.input wire:model.defer="first_name" />
                                 @error('first_name') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Apellido</label>
-                                <input wire:model.defer="last_name" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Apellido</x-ui.label>
+                                <x-ui.input wire:model.defer="last_name" />
                                 @error('last_name') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Email</label>
-                                <input type="email" wire:model.defer="email" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Email</x-ui.label>
+                                <x-ui.input type="email" wire:model.defer="email" />
                                 @error('email') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Celular</label>
-                                <input wire:model.defer="phone" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Celular</x-ui.label>
+                                <x-ui.input wire:model.defer="phone" />
                                 @error('phone') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Fecha de nacimiento</label>
-                                <input type="date" wire:model.defer="birthdate" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Fecha de nacimiento</x-ui.label>
+                                <x-ui.input type="date" wire:model.defer="birthdate" />
                                 @error('birthdate') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Puesto</label>
-                                <input wire:model.defer="job_title" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Puesto</x-ui.label>
+                                <x-ui.input wire:model.defer="job_title" />
                                 @error('job_title') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -170,30 +170,30 @@
 
                     {{-- Organización --}}
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-900">Organización</h3>
+                        <h3 class="text-sm font-semibold text-slate-950">Organización</h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                                <label class="text-sm text-gray-700">Nombre de la organización</label>
-                                <input wire:model.defer="organization_name" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Nombre de la organización</x-ui.label>
+                                <x-ui.input wire:model.defer="organization_name" />
                                 @error('organization_name') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Rubro</label>
-                                <input wire:model.defer="industry" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Rubro</x-ui.label>
+                                <x-ui.input wire:model.defer="industry" />
                                 @error('industry') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Dirección</label>
-                                <input wire:model.defer="address" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Dirección</x-ui.label>
+                                <x-ui.input wire:model.defer="address" />
                                 @error('address') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                         <div>
-                            <label class="text-sm text-gray-700">Logo (opcional)</label>
-                            <input type="file" wire:model="company_logo_upload" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 bg-white" />
+                            <x-ui.label>Logo (opcional)</x-ui.label>
+                            <x-ui.input type="file" wire:model="company_logo_upload" class="file:mr-4 file:rounded-xl file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700" />
                             @error('company_logo_upload') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             @if($company_logo_upload)
                                 <img
@@ -208,15 +208,15 @@
                                     class="mt-3 size-20 rounded-lg object-cover border border-gray-200"
                                 />
                             @endif
-                        </div>
+                            </div>
 
                             <div>
-                                <label class="text-sm text-gray-700">Tamaño</label>
-                                <select wire:model.defer="company_size" class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-blue-200 outline-none">
+                                <x-ui.label>Tamaño</x-ui.label>
+                                <x-ui.select wire:model.defer="company_size">
                                     @foreach($sizes as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
-                                </select>
+                                </x-ui.select>
                                 @error('company_size') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -224,20 +224,18 @@
 
                     {{-- Evaluación --}}
                     <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-900">Evaluación interna (Nube)</h3>
+                        <h3 class="text-sm font-semibold text-slate-950">Evaluación interna (Nube)</h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm text-gray-700">Puntuación (1 a 10)</label>
-                                <input type="number" min="1" max="10" wire:model.defer="score"
-                                    class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none" />
+                                <x-ui.label>Puntuación (1 a 10)</x-ui.label>
+                                <x-ui.input type="number" min="1" max="10" wire:model.defer="score" />
                                 @error('score') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="text-sm text-gray-700">Notas</label>
-                                <textarea rows="3" wire:model.defer="notes"
-                                    class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none"></textarea>
+                                <x-ui.label>Notas</x-ui.label>
+                                <x-ui.textarea rows="3" wire:model.defer="notes"></x-ui.textarea>
                                 @error('notes') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -245,14 +243,14 @@
                 </div>
 
                 {{-- Actions --}}
-                <div class="flex flex-col sm:flex-row gap-3 justify-end border-t bg-white px-6 py-4 sticky bottom-0">
-                    <button type="button" wire:click="closeModal" class="rounded-lg border border-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                <div class="sticky bottom-0 flex flex-col justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row">
+                    <x-ui.button type="button" variant="secondary" wire:click="closeModal">
                         Cancelar
-                    </button>
+                    </x-ui.button>
 
-                    <button type="submit" class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 transition">
+                    <x-ui.button type="submit">
                         {{ $clientId ? 'Guardar cambios' : 'Crear cliente' }}
-                    </button>
+                    </x-ui.button>
                 </div>
             </form>
         </div>

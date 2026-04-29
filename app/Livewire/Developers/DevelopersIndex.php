@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('layouts.app')]
 
@@ -21,38 +21,62 @@ class DevelopersIndex extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $statusFilter = '';
+
     public string $availabilityFilter = '';
+
     public string $levelFilter = '';
 
     public bool $open = false;
+
     public ?int $developerId = null;
+
     public ?int $contactId = null;
 
     public string $first_name = '';
+
     public string $last_name = '';
+
     public string $email = '';
+
     public ?string $phone = null;
+
     public ?string $birthdate = null;
+
     public ?string $puesto = null;
 
     public array $skills = [];
+
     public array $skins = [];
+
     public string $newSkill = '';
+
     public ?string $github_username = null;
+
     public ?string $github_url = null;
+
     public ?string $linkedin_url = null;
+
     public ?string $alias = null;
+
     public ?string $cbu = null;
+
     public ?string $phrase = null;
+
     public ?int $score = null;
+
     public string $level = 'junior';
+
     public string $status = 'active';
+
     public string $availability = 'full_time';
+
     public ?string $notes = null;
 
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
     public $profile_photo_upload = null;
+
     public ?string $profile_photo = null;
 
     protected $queryString = [
@@ -130,7 +154,7 @@ class DevelopersIndex extends Component
 
         $contact = $this->contactId
             ? Contact::query()->findOrFail($this->contactId)
-            : new Contact();
+            : new Contact;
 
         $contact->fill($contactData);
         $contact->save();
@@ -489,7 +513,7 @@ class DevelopersIndex extends Component
             ->with(['contact', 'projects:id,name'])
             ->withCount('projects')
             ->when($this->search !== '', function ($query) {
-                $term = '%' . trim($this->search) . '%';
+                $term = '%'.trim($this->search).'%';
 
                 $query->where(function ($subQuery) use ($term) {
                     $subQuery
@@ -520,6 +544,6 @@ class DevelopersIndex extends Component
             'statuses' => Developer::STATUSES,
             'availabilities' => Developer::AVAILABILITIES,
             'levels' => Developer::LEVELS,
-        ]);
+        ])->layout('layouts.app');
     }
 }

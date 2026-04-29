@@ -1,10 +1,17 @@
-<div class="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <x-ui.stat-card label="Total developers" :value="number_format($total, 0, ',', '.')" hint="Base completa de talento disponible." tone="primary" />
-        <x-ui.stat-card label="Activos" :value="number_format($activos, 0, ',', '.')" hint="Perfiles habilitados para asignaciones." tone="success" />
-        <x-ui.stat-card label="Tiempo completo" :value="number_format($fullTime, 0, ',', '.')" hint="Capacidad principal del equipo actual." tone="info" />
-        <x-ui.stat-card label="Freelance" :value="number_format($freelance, 0, ',', '.')" hint="Soporte flexible para picos de demanda." tone="accent" />
-    </div>
+<x-ui.page-container>
+    <div class="space-y-6">
+        <x-ui.section-header
+            title="Developers"
+            description="Gestiona capacidad, disponibilidad y skills del equipo tecnico con una interfaz consistente."
+            eyebrow="Talento"
+        />
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <x-ui.stat-card label="Total developers" :value="number_format($total, 0, ',', '.')" hint="Base completa de talento disponible." tone="primary" />
+            <x-ui.stat-card label="Activos" :value="number_format($activos, 0, ',', '.')" hint="Perfiles habilitados para asignaciones." tone="success" />
+            <x-ui.stat-card label="Tiempo completo" :value="number_format($fullTime, 0, ',', '.')" hint="Capacidad principal del equipo actual." tone="info" />
+            <x-ui.stat-card label="Freelance" :value="number_format($freelance, 0, ',', '.')" hint="Soporte flexible para picos de demanda." tone="accent" />
+        </div>
 
     <x-ui.card class="space-y-5 bg-slate-50/70">
         <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
@@ -181,5 +188,6 @@
         </div>
     </x-ui.card>
 
-    @include('livewire.developers.partials.developer-form')
-</div>
+        @include('livewire.developers.partials.developer-form')
+    </div>
+</x-ui.page-container>
