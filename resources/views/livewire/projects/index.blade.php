@@ -1,85 +1,59 @@
-<div>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">Proyectos</h2>
-    </x-slot>
+<div class="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <x-ui.section-header
+        title="Proyectos"
+        description="Monitorea estado, riesgo y valor del portafolio sin salir del flujo operativo."
+        eyebrow="Operacion"
+    >
+        <x-slot:actions>
+            <x-ui.button type="button" wire:click="openCreate">
+                Nuevo proyecto
+            </x-ui.button>
+        </x-slot:actions>
+    </x-ui.section-header>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-end">
-                <button
-                    type="button"
-                    wire:click="openCreate"
-                    class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-                >
-                    <span class="mr-2">+</span> Nuevo Proyecto
-                </button>
-            </div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        @php
+            $all = \App\Models\Project::count();
+            $execution = \App\Models\Project::where('status', 'execution')->count();
+            $finished = \App\Models\Project::where('status', 'finished')->count();
+            $issues = \App\Models\Project::where('execution_sub_status', 'with_debt')->orWhere('execution_sub_status', 'delayed')->count();
+            $totalRevenue = \App\Models\Project::whereNotNull('total_cost')->sum('total_cost');
+            $avg = $all > 0 ? round($totalRevenue / $all) : 0;
+        @endphp
 
-            {{-- Stats (simple) --}}
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                @php
-                    $all = \App\Models\Project::count();
-                    $execution = \App\Models\Project::where('status','execution')->count();
-                    $finished = \App\Models\Project::where('status','finished')->count();
-                    $issues = \App\Models\Project::where('execution_sub_status','with_debt')->orWhere('execution_sub_status','delayed')->count();
-                @endphp
+        <x-ui.stat-card label="Proyectos totales" :value="number_format($all, 0, ',', '.')" :hint="number_format($execution, 0, ',', '.').' en ejecucion'" tone="primary" />
+        <x-ui.stat-card label="Finalizados" :value="number_format($finished, 0, ',', '.')" :hint="($all > 0 ? round(($finished / $all) * 100) : 0).'% tasa de cierre'" tone="success" />
+        <x-ui.stat-card label="Con problemas" :value="number_format($issues, 0, ',', '.')" hint="Proyectos con deuda o demora." tone="danger" />
+        <x-ui.stat-card label="Valor promedio" :value="'$'.number_format($avg, 0, ',', '.')" :hint="'Total: $'.number_format($totalRevenue, 0, ',', '.')" tone="accent" />
+    </div>
 
-                <div class="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6">
-                    <div class="text-sm text-gray-600">Proyectos Totales</div>
-                    <div class="mt-2 text-3xl text-blue-600">{{ $all }}</div>
-                    <div class="mt-2 text-xs text-gray-600">{{ $execution }} en ejecución</div>
-                </div>
+    <x-ui.card class="space-y-5 bg-slate-50/70">
+        <div>
+            <h2 class="text-lg font-semibold text-slate-950">Vista de portafolio</h2>
+            <p class="text-sm text-slate-500">Filtra por estado y detecta rapido proyectos activos, pausados o con riesgo.</p>
+        </div>
 
-                <div class="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-6">
-                    <div class="text-sm text-gray-600">Finalizados</div>
-                    <div class="mt-2 text-3xl text-green-600">{{ $finished }}</div>
-                    <div class="mt-2 text-xs text-gray-600">
-                        {{ $all > 0 ? round(($finished / $all) * 100) : 0 }}% tasa de éxito
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <x-ui.input
+                type="text"
+                wire:model.live="search"
+                placeholder="Buscar por nombre, cliente o empresa..."
+            />
 
-                <div class="rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 to-white p-6">
-                    <div class="text-sm text-gray-600">Con Problemas</div>
-                    <div class="mt-2 text-3xl text-red-600">{{ $issues }}</div>
-                    <div class="mt-2 text-xs text-gray-600">deudas/demoras</div>
-                </div>
+            <x-ui.select wire:model.live="statusFilter">
+                <option value="all">Todos los estados</option>
+                <option value="prospection">En Prospección</option>
+                <option value="interested">Interesado</option>
+                <option value="sale_closed">Venta Cerrada</option>
+                <option value="execution">En Ejecución</option>
+                <option value="paused">Frenado</option>
+                <option value="finished">Finalizado</option>
+            </x-ui.select>
+        </div>
+    </x-ui.card>
 
-                <div class="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-6">
-                    <div class="text-sm text-gray-600">Valor Promedio</div>
-                    @php
-                        $totalRevenue = \App\Models\Project::whereNotNull('total_cost')->sum('total_cost');
-                        $avg = $all > 0 ? round($totalRevenue / $all) : 0;
-                    @endphp
-                    <div class="mt-2 text-3xl text-purple-600">${{ number_format($avg, 0, ',', '.') }}</div>
-                    <div class="mt-2 text-xs text-gray-600">Total: ${{ number_format($totalRevenue, 0, ',', '.') }}</div>
-                </div>
-            </div>
-
-            {{-- Filters --}}
-            <div class="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <input
-                        type="text"
-                        wire:model.live="search"
-                        placeholder="Buscar por nombre, cliente o empresa..."
-                        class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2"
-                    />
-
-                    <select wire:model.live="statusFilter" class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2">
-                        <option value="all">Todos los estados</option>
-                        <option value="prospection">En Prospección</option>
-                        <option value="interested">Interesado</option>
-                        <option value="sale_closed">Venta Cerrada</option>
-                        <option value="execution">En Ejecución</option>
-                        <option value="paused">Frenado</option>
-                        <option value="finished">Finalizado</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Grid --}}
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                @forelse($projects as $project)
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        @forelse($projects as $project)
                     @php
                         $status = $project->status->value;
                         $cfg = config("projects.status.$status");
@@ -91,13 +65,13 @@
                     @endphp
 
                     <a href="{{ route('proyectos.show', $project) }}"
-                       class="block overflow-hidden rounded-2xl border {{ $cfg['border'] }} bg-card shadow-sm transition hover:shadow-lg">
+                       class="block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md">
                         <div class="h-2 {{ $bar }}"></div>
 
                         <div class="p-6">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="flex-1">
-                                    <h3 class="mb-2 text-xl text-gray-900">{{ $project->name }}</h3>
+                                     <h3 class="mb-2 text-xl text-slate-950">{{ $project->name }}</h3>
 
                                     {{-- Status badge --}}
                                     <div class="flex items-center gap-2">
@@ -124,13 +98,13 @@
                                     </div>
                                 </div>
 
-                                <span class="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                                    Ver
-                                </span>
-                            </div>
+                                 <span class="rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-600">
+                                     Ver
+                                 </span>
+                             </div>
 
                             {{-- Client --}}
-                            <div class="mt-4 rounded-lg bg-gray-50 p-3">
+                             <div class="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/80">
                                 @php
                                     $client = $project->client;
                                     $contact = $client?->contact;
@@ -141,20 +115,20 @@
                                         : 'Sin contacto registrado';
                                 @endphp
                                 <div class="flex items-center gap-3">
-                                    <div class="flex size-8 items-center justify-center rounded-full bg-blue-100 text-sm text-blue-600">
-                                        {{ $clientInitial }}
-                                    </div>
-                                    <div>
-                                        <div class="text-sm text-gray-900">{{ $clientName }}</div>
-                                        <div class="text-xs text-gray-500">
-                                            {{ $contactName }}
-                                        </div>
-                                    </div>
+                                     <div class="flex size-9 items-center justify-center rounded-2xl bg-indigo-100 text-sm font-semibold text-indigo-600">
+                                         {{ $clientInitial }}
+                                     </div>
+                                     <div>
+                                         <div class="text-sm font-medium text-slate-950">{{ $clientName }}</div>
+                                         <div class="text-xs text-slate-500">
+                                             {{ $contactName }}
+                                         </div>
+                                     </div>
                                 </div>
                             </div>
 
                             {{-- Info --}}
-                            <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-gray-600">
+                             <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
                                 <div>
                                     @if($project->total_cost)
                                         ${{ number_format($project->total_cost, 0, ',', '.') }}
@@ -173,35 +147,33 @@
 
                             {{-- Alerts --}}
                             @if($status === 'execution' && $project->execution_sub_status?->value === 'with_debt')
-                                <div class="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-800">
-                                    Este proyecto tiene pagos pendientes
-                                </div>
-                            @endif
+                                 <div class="mt-4 rounded-2xl bg-red-50 p-3 text-xs text-red-800 ring-1 ring-red-200">
+                                     Este proyecto tiene pagos pendientes
+                                 </div>
+                             @endif
 
-                            @if($status === 'execution' && $project->execution_sub_status?->value === 'delayed')
-                                <div class="mt-4 rounded-lg bg-orange-50 p-3 text-xs text-orange-800">
-                                    Este proyecto presenta demoras en la entrega
-                                </div>
-                            @endif
+                             @if($status === 'execution' && $project->execution_sub_status?->value === 'delayed')
+                                 <div class="mt-4 rounded-2xl bg-orange-50 p-3 text-xs text-orange-800 ring-1 ring-orange-200">
+                                     Este proyecto presenta demoras en la entrega
+                                 </div>
+                             @endif
 
-                            @if($status === 'paused')
-                                <div class="mt-4 rounded-lg bg-purple-50 p-3 text-xs text-purple-800">
-                                    Proyecto pausado temporalmente
-                                </div>
-                            @endif
+                             @if($status === 'paused')
+                                 <div class="mt-4 rounded-2xl bg-purple-50 p-3 text-xs text-purple-800 ring-1 ring-purple-200">
+                                     Proyecto pausado temporalmente
+                                 </div>
+                             @endif
                         </div>
                     </a>
-                @empty
-                    <div class="rounded-2xl border border-border bg-card p-8 text-center text-gray-600 lg:col-span-2">
-                        No se encontraron proyectos con esos filtros.
-                    </div>
-                @endforelse
+        @empty
+            <div class="lg:col-span-2">
+                <x-ui.empty-state title="No se encontraron proyectos" description="Prueba con otro estado o una busqueda mas amplia para recuperar resultados." />
             </div>
+        @endforelse
+    </div>
 
-            <div>
-                {{ $projects->links() }}
-            </div>
-        </div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        {{ $projects->links() }}
     </div>
 
     {{-- Modal Create (simple) --}}

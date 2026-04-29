@@ -1,121 +1,103 @@
 <div class="space-y-6">
-    {{-- Header --}}
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-            <h1 class="text-3xl mb-2 text-gray-900">Clientes</h1>
-            <p class="text-gray-600">Administra tu cartera de clientes</p>
-        </div>
-
-        <button
-            type="button"
-            wire:click="create"
-            class="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2 rounded-lg px-4 py-2 transition"
-        >
-            <span class="text-lg leading-none">＋</span>
-            Nuevo Cliente
-        </button>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <x-ui.stat-card label="Total clientes" :value="number_format($stats['total'], 0, ',', '.')" hint="Organizaciones registradas en la cartera." tone="primary" />
+        <x-ui.stat-card label="Con puntuacion" :value="number_format($stats['with_score'], 0, ',', '.')" hint="Clientes con evaluacion interna cargada." tone="accent" />
+        <x-ui.stat-card label="Promedio" :value="number_format((float) $stats['avg_score'], 1, ',', '.')" hint="Promedio de score para seguimiento comercial." tone="success" />
     </div>
 
-    {{-- Search Bar --}}
-    <div class="rounded-xl border bg-white p-4">
-        <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔎</span>
-            <input
+    <x-ui.card class="space-y-5 bg-slate-50/70">
+        <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-950">Cartera activa</h2>
+                <p class="text-sm text-slate-500">Busca rapido, revisa scoring y abre el formulario sin salir del contexto.</p>
+            </div>
+
+            <x-ui.button type="button" wire:click="create">
+                Nuevo cliente
+            </x-ui.button>
+        </div>
+
+        <div>
+            <x-ui.label for="clients-search">Buscar</x-ui.label>
+            <x-ui.input
+                id="clients-search"
                 type="text"
                 placeholder="Buscar clientes por nombre o contacto..."
-                class="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
                 wire:model.live.debounce.300ms="search"
             />
         </div>
-    </div>
+    </x-ui.card>
 
-    {{-- Clients Grid --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         @forelse($clients as $client)
-            <div wire:key="client-{{ $client->id }}" class="bg-white rounded-xl border p-6 hover:shadow-lg transition-shadow">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="bg-purple-100 text-purple-700 size-12 rounded-full flex items-center justify-center text-xl font-semibold overflow-hidden">
-                        @if($client->company_logo)
-                            <img
-                                src="{{ \Illuminate\Support\Facades\Storage::url($client->company_logo) }}"
-                                alt="Logo de {{ $client->organization_name }}"
-                                class="size-14 -m-1 object-cover"
-                            />
-                        @else
-                            {{ mb_substr($client->organization_name, 0, 1) }}
-                        @endif
+            @php
+                $score = $client->score;
+                $scoreVariant = $score >= 8 ? 'success' : ($score >= 5 ? 'warning' : 'neutral');
+            @endphp
+
+            <x-ui.card wire:key="client-{{ $client->id }}" class="gap-0 p-0 transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="p-6">
+                    <div class="mb-4 flex items-start justify-between">
+                        <div class="flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-indigo-100 text-xl font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                            @if($client->company_logo)
+                                <img
+                                    src="{{ \Illuminate\Support\Facades\Storage::url($client->company_logo) }}"
+                                    alt="Logo de {{ $client->organization_name }}"
+                                    class="size-14 -m-1 object-cover"
+                                />
+                            @else
+                                {{ mb_substr($client->organization_name, 0, 1) }}
+                            @endif
+                        </div>
+
+                        <div class="flex gap-2">
+                            <x-ui.button type="button" size="sm" variant="secondary" wire:click="edit({{ $client->id }})">
+                                Editar
+                            </x-ui.button>
+                            <x-ui.button type="button" size="sm" variant="danger" wire:click="delete({{ $client->id }})">
+                                Eliminar
+                            </x-ui.button>
+                        </div>
                     </div>
 
-                    <div class="flex gap-2">
-                        <button
-                            type="button"
-                            wire:click="edit({{ $client->id }})"
-                            class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-                        >
-                            Editar
-                        </button>
+                    <h3 class="mb-1 text-xl text-slate-950">{{ $client->organization_name }}</h3>
+                    <p class="mb-4 text-slate-600">{{ $client->contact?->full_name }}</p>
 
-                        <button
-                            type="button"
-                            wire:click="delete({{ $client->id }})"
-                            class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 transition"
-                        >
-                            Eliminar
-                        </button>
+                    <div class="mb-4 space-y-2">
+                        <div class="flex items-center gap-2 text-sm text-slate-600">
+                            <span class="inline-flex size-7 items-center justify-center rounded-xl bg-slate-100">✉️</span>
+                            <span class="truncate">{{ $client->contact?->email }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-slate-600">
+                            <span class="inline-flex size-7 items-center justify-center rounded-xl bg-slate-100">📞</span>
+                            <span class="truncate">{{ $client->contact?->phone ?? 'Sin celular' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 border-t border-slate-200 pt-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Tamaño</span>
+                            <span class="font-medium text-slate-950">{{ $client->company_size_label }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Puntuación</span>
+                            <span class="font-medium text-slate-950">{{ $score ?? '—' }}</span>
+                        </div>
+                        <x-ui.badge :variant="$scoreVariant">
+                            {{ $score ? 'Score '.$score : 'Sin score' }}
+                        </x-ui.badge>
                     </div>
                 </div>
-
-                <h3 class="text-xl mb-1 text-gray-900">{{ $client->organization_name }}</h3>
-                <p class="text-gray-600 mb-4">{{ $client->contact?->full_name }}</p>
-
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <span class="inline-flex size-7 items-center justify-center rounded-md bg-gray-100">✉️</span>
-                        <span class="truncate">{{ $client->contact?->email }}</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <span class="inline-flex size-7 items-center justify-center rounded-md bg-gray-100">📞</span>
-                        <span class="truncate">{{ $client->contact?->phone ?? 'Sin celular' }}</span>
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-200 pt-4 space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Tamaño:</span>
-                        <span class="text-gray-900 font-medium">{{ $client->company_size_label }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Puntuación:</span>
-                        <span class="text-gray-900 font-medium">{{ $client->score ?? '—' }}</span>
-                    </div>
-                </div>
-            </div>
+            </x-ui.card>
         @empty
-            <div class="col-span-full rounded-xl border bg-white p-10 text-center text-gray-600">
-                No hay clientes aún. Creá el primero con “Nuevo Cliente”.
+            <div class="col-span-full">
+                <x-ui.empty-state title="No hay clientes aun" description="Crea el primero para empezar a construir la cartera comercial del ERP." />
             </div>
         @endforelse
     </div>
 
-    {{-- Paginación (NO tocar, esto es lo que estabas cuidando) --}}
-    <div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
         {{ $clients->onEachSide(1)->links() }}
-    </div>
-
-    {{-- Stats Footer (si ya lo tenías) --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="rounded-xl border bg-white p-4">
-            <p class="text-sm text-gray-600 mb-1">Total Clientes</p>
-            <p class="text-2xl text-gray-900">{{ $stats['total'] }}</p>
-        </div>
-        <div class="rounded-xl border bg-white p-4">
-            <p class="text-sm text-gray-600 mb-1">Con Puntuación</p>
-            <p class="text-2xl text-gray-900">{{ $stats['with_score'] }}</p>
-        </div>
-        <div class="rounded-xl border bg-white p-4">
-            <p class="text-sm text-gray-600 mb-1">Promedio</p>
-            <p class="text-2xl text-gray-900">{{ $stats['avg_score'] }}</p>
-        </div>
     </div>
 
     {{-- MODAL Create/Edit --}}

@@ -1,13 +1,11 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight">
-            Clientes
-        </h2>
-    </x-slot>
+    <x-ui.page-container>
+        <x-ui.section-header
+            title="Clientes"
+            description="Administra la cartera, la calidad de la relacion y la informacion clave de cada organizacion."
+            eyebrow="Base comercial"
+        />
 
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <livewire:clients.index />
-        </div>
-    </div>
+        <livewire:clients.index />
+    </x-ui.page-container>
 </x-app-layout>

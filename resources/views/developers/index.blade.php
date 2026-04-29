@@ -1,20 +1,11 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">
-            Clientes
-        </h2>
-    </x-slot>
+    <x-ui.page-container>
+        <x-ui.section-header
+            title="Developers"
+            description="Gestiona capacidad, disponibilidad y skills del equipo tecnico con una interfaz consistente."
+            eyebrow="Talento"
+        />
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="rounded-2xl border border-border bg-card p-8 text-card-foreground shadow-sm">
-                
-                <x-app-layout>
-                    <x-slot name="header">Developers</x-slot>
-                    <livewire:developers.developers-index />
-                </x-app-layout>
-                
-            </div>
-        </div>
-    </div>
+        <livewire:developers.developers-index />
+    </x-ui.page-container>
 </x-app-layout>

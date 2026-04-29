@@ -1,94 +1,132 @@
-<div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-900">Cobros</h1>
-        <p class="text-sm text-slate-500">Gestioná flujos, cuotas y pagos.</p>
-    </div>
-    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+@php
+    $visibleFlows = $flows->getCollection();
+    $visibleAmount = $visibleFlows->sum(fn ($flow) => (float) $flow->total_amount);
+    $visibleBalance = $visibleFlows->sum(fn ($flow) => (float) $flow->total_balance);
+    $statusBadgeVariants = [
+        'draft' => 'warning',
+        'active' => 'primary',
+        'completed' => 'success',
+        'cancelled' => 'danger',
+    ];
+@endphp
 
-        <div class="flex flex-col gap-3 md:flex-row md:items-end">
+<div class="space-y-6">
+    <div class="grid gap-4 md:grid-cols-3">
+        <x-ui.stat-card
+            label="Resultados"
+            :value="number_format($flows->total(), 0, ',', '.')"
+            hint="Flujos que coinciden con los filtros actuales."
+            tone="primary"
+        />
+
+        <x-ui.stat-card
+            label="Monto visible"
+            :value="'$' . number_format($visibleAmount, 2, ',', '.')"
+            hint="Suma de los flujos cargados en esta pagina."
+            tone="accent"
+        />
+
+        <x-ui.stat-card
+            label="Saldo pendiente visible"
+            :value="'$' . number_format($visibleBalance, 2, ',', '.')"
+            hint="Ayuda a priorizar seguimientos desde la grilla."
+            tone="success"
+        />
+    </div>
+
+    <x-ui.card class="space-y-5 bg-slate-50/70">
+        <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Buscar</label>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cliente o proyecto..."
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <h2 class="text-lg font-semibold text-slate-950">Vista operativa</h2>
+                <p class="text-sm text-slate-500">Filtra rapido y entra al detalle sin perder contexto.</p>
+            </div>
+
+            <p class="text-sm text-slate-500">{{ $flows->count() }} resultados en esta pagina</p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_220px]">
+            <div>
+                <x-ui.label for="cobros-search">Buscar</x-ui.label>
+                <x-ui.input
+                    id="cobros-search"
+                    type="text"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Cliente o proyecto..."
+                />
             </div>
 
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Estado</label>
-                <select wire:model.live="status"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <x-ui.label for="cobros-status">Estado</x-ui.label>
+                <x-ui.select id="cobros-status" wire:model.live="status">
                     <option value="">Todos</option>
                     <option value="draft">Borrador</option>
                     <option value="active">Activo</option>
                     <option value="completed">Completado</option>
                     <option value="cancelled">Cancelado</option>
-                </select>
+                </x-ui.select>
             </div>
-            <div>
-                <a href="{{ route('cobros.create') }}"
-                    class="inline-flex rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                    Nuevo flujo
-                </a>
-            </div>
-
         </div>
+    </x-ui.card>
 
-    </div>
+    @if ($flows->count())
+        <x-ui.card padding="none" class="overflow-hidden">
+            <x-ui.table>
+                <x-slot:head>
+                    <th class="px-5 py-4">Proyecto</th>
+                    <th class="px-5 py-4">Cliente</th>
+                    <th class="px-5 py-4">Monto total</th>
+                    <th class="px-5 py-4">Cuotas</th>
+                    <th class="px-5 py-4">Pagadas</th>
+                    <th class="px-5 py-4">Pendiente</th>
+                    <th class="px-5 py-4">Estado</th>
+                    <th class="px-5 py-4 text-right">Acciones</th>
+                </x-slot:head>
 
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
-                <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th class="px-4 py-3">Proyecto</th>
-                    <th class="px-4 py-3">Cliente</th>
-                    <th class="px-4 py-3">Monto total</th>
-                    <th class="px-4 py-3">Cuotas</th>
-                    <th class="px-4 py-3">Pagadas</th>
-                    <th class="px-4 py-3">Pendiente</th>
-                    <th class="px-4 py-3">Estado</th>
-                    <th class="px-4 py-3"></th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
-                @forelse ($flows as $flow)
-                    <tr class="hover:bg-slate-50/70">
-                        <td class="px-4 py-3">{{ $flow->project?->name }}</td>
-                        <td class="px-4 py-3">
-                            {{ $flow->project?->client?->contact?->organization ??
-                                trim(
-                                    ($flow->project?->client?->contact?->first_name ?? '') .
-                                        ' ' .
-                                        ($flow->project?->client?->contact?->last_name ?? ''),
-                                ) }}
+                @foreach ($flows as $flow)
+                    @php
+                        $clientName = $flow->project?->client?->contact?->organization
+                            ?? trim(($flow->project?->client?->contact?->first_name ?? '') . ' ' . ($flow->project?->client?->contact?->last_name ?? ''));
+
+                        $statusKey = $flow->status->value ?? null;
+                    @endphp
+
+                    <tr class="align-top transition hover:bg-slate-50/80">
+                        <td class="px-5 py-4">
+                            <div class="font-medium text-slate-950">{{ $flow->project?->name }}</div>
+                            <div class="mt-1 text-xs text-slate-500">Flujo #{{ $flow->id }}</div>
                         </td>
-                        <td class="px-4 py-3">${{ number_format((float) $flow->total_amount, 2, ',', '.') }}</td>
-                        <td class="px-4 py-3">{{ $flow->installments_count }}</td>
-                        <td class="px-4 py-3">{{ $flow->paid_installments_count }}/{{ $flow->installments_count }}</td>
-                        <td class="px-4 py-3">${{ number_format((float) $flow->total_balance, 2, ',', '.') }}</td>
-                        <td class="px-4 py-3">
-                            <span
-                                class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+
+                        <td class="px-5 py-4 text-slate-600">{{ $clientName ?: 'Sin cliente asociado' }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-950">${{ number_format((float) $flow->total_amount, 2, ',', '.') }}</td>
+                        <td class="px-5 py-4 text-slate-600">{{ $flow->installments_count }}</td>
+                        <td class="px-5 py-4 text-slate-600">{{ $flow->paid_installments_count }}/{{ $flow->installments_count }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-950">${{ number_format((float) $flow->total_balance, 2, ',', '.') }}</td>
+                        <td class="px-5 py-4">
+                            <x-ui.badge :variant="$statusBadgeVariants[$statusKey] ?? 'neutral'">
                                 {{ $flow->status->label() }}
-                            </span>
+                            </x-ui.badge>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <a href="{{ route('cobros.show', $flow) }}"
-                                class="inline-flex rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                        <td class="px-5 py-4 text-right">
+                            <x-ui.button href="{{ route('cobros.show', $flow) }}" variant="secondary" size="sm">
                                 Ver detalle
-                            </a>
+                            </x-ui.button>
                         </td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="px-4 py-8 text-center text-sm text-slate-500">
-                            No hay flujos de cobro para mostrar.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                @endforeach
+            </x-ui.table>
+        </x-ui.card>
+    @else
+        <x-ui.empty-state
+            title="No hay flujos para mostrar"
+            description="Ajusta los filtros o crea un nuevo flujo para empezar a gestionar cobros desde este modulo."
+        >
+            <x-ui.button href="{{ route('cobros.create') }}" variant="accent">
+                Crear flujo
+            </x-ui.button>
+        </x-ui.empty-state>
+    @endif
 
-    <div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
         {{ $flows->links() }}
     </div>
 </div>

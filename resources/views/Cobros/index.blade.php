@@ -1,19 +1,17 @@
 <x-app-layout>
-    {{-- <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">
-            Cobros
-        </h2>
-    </x-slot> --}}
+    <x-ui.page-container>
+        <x-ui.section-header
+            title="Cobros"
+            description="Gestiona flujos, cuotas y pagos con una interfaz mas clara, compacta y lista para escalar al resto del ERP."
+            eyebrow="ERP Nube"
+        >
+            <x-slot:actions>
+                <x-ui.button href="{{ route('cobros.create') }}" variant="accent">
+                    Nuevo flujo
+                </x-ui.button>
+            </x-slot:actions>
+        </x-ui.section-header>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="rounded-2xl border border-border bg-card p-8 text-card-foreground shadow-sm">
-                
-              
-                    <livewire:cobros.index />
-              
-                
-            </div>
-        </div>
-    </div>
+        <livewire:cobros.index />
+    </x-ui.page-container>
 </x-app-layout>

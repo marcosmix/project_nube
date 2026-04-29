@@ -1,63 +1,89 @@
+@php
+    $statusBadgeVariants = [
+        'new' => 'info',
+        'contacted' => 'primary',
+        'qualified' => 'accent',
+        'proposal_sent' => 'warning',
+        'won' => 'success',
+        'lost' => 'danger',
+    ];
+@endphp
+
 <div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-900">Oportunidades</h1>
-        <p class="text-sm text-slate-500">Centralizá el trabajo comercial sin mezclarlo con la ejecución operativa.</p>
+    <div class="grid gap-4 md:grid-cols-3">
+        <x-ui.stat-card
+            label="Oportunidades"
+            :value="number_format($opportunities->total(), 0, ',', '.')"
+            hint="Registros filtrados dentro del pipeline comercial."
+            tone="primary"
+        />
+        <x-ui.stat-card
+            label="Con responsable"
+            :value="number_format($opportunities->getCollection()->whereNotNull('responsible_user_id')->count(), 0, ',', '.')"
+            hint="Ayuda a detectar oportunidades sin seguimiento claro."
+            tone="accent"
+        />
+        <x-ui.stat-card
+            label="Con avances recientes"
+            :value="number_format($opportunities->getCollection()->filter(fn ($item) => $item->notes->isNotEmpty() || $item->statusLogs->isNotEmpty())->count(), 0, ',', '.')"
+            hint="Consultas con actividad registrada en la pagina actual."
+            tone="success"
+        />
     </div>
 
-    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div class="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <x-ui.card class="space-y-5 bg-slate-50/70">
+        <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Buscar</label>
-                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Consulta, contacto o cliente..."
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <h2 class="text-lg font-semibold text-slate-950">Vista comercial</h2>
+                <p class="text-sm text-slate-500">Filtra por etapa, origen o responsable para ordenar el seguimiento diario.</p>
+            </div>
+
+            <x-ui.button type="button" variant="success" wire:click="openCreate">
+                Nueva oportunidad
+            </x-ui.button>
+        </div>
+
+        <div class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div>
+                <x-ui.label for="sales-search">Buscar</x-ui.label>
+                <x-ui.input id="sales-search" wire:model.live.debounce.300ms="search" type="text" placeholder="Consulta, contacto o cliente..." />
             </div>
 
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Estado</label>
-                <select wire:model.live="status"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <x-ui.label for="sales-status">Estado</x-ui.label>
+                <x-ui.select id="sales-status" wire:model.live="status">
                     <option value="">Todos</option>
                     @foreach($statusOptions as $statusOption)
                         <option value="{{ $statusOption['value'] }}">{{ $statusOption['label'] }}</option>
                     @endforeach
-                </select>
+                </x-ui.select>
             </div>
 
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Origen</label>
-                <select wire:model.live="source"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <x-ui.label for="sales-source">Origen</x-ui.label>
+                <x-ui.select id="sales-source" wire:model.live="source">
                     <option value="">Todos</option>
                     @foreach($sourceOptions as $sourceOption)
                         <option value="{{ $sourceOption['value'] }}">{{ $sourceOption['label'] }}</option>
                     @endforeach
-                </select>
+                </x-ui.select>
             </div>
 
             <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600">Responsable</label>
-                <select wire:model.live="responsibleUserId"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none">
+                <x-ui.label for="sales-responsible">Responsable</x-ui.label>
+                <x-ui.select id="sales-responsible" wire:model.live="responsibleUserId">
                     <option value="">Todos</option>
                     @foreach($this->users as $user)
                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
-                </select>
+                </x-ui.select>
             </div>
         </div>
+    </x-ui.card>
 
-        <div>
-            <button type="button" wire:click="openCreate"
-                class="inline-flex rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200">
-                Nueva oportunidad
-            </button>
-        </div>
-    </div>
-
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
-                <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <x-ui.card padding="none" class="overflow-hidden">
+        <x-ui.table>
+            <x-slot:head>
                     <th class="px-4 py-3">Consulta</th>
                     <th class="px-4 py-3">Contacto</th>
                     <th class="px-4 py-3">Origen</th>
@@ -66,13 +92,13 @@
                     <th class="px-4 py-3">Ultimo avance</th>
                     <th class="px-4 py-3">Estado</th>
                     <th class="px-4 py-3 text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
+            </x-slot:head>
+
                 @forelse($opportunities as $opportunity)
                     @php
                         $latestNote = $opportunity->notes->first();
                         $latestStatusLog = $opportunity->statusLogs->first();
+                        $statusKey = $opportunity->status->value ?? null;
                     @endphp
                     <tr class="hover:bg-slate-50/70">
                         <td class="px-4 py-3">
@@ -100,20 +126,18 @@
                             @endif
                         </td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            <x-ui.badge :variant="$statusBadgeVariants[$statusKey] ?? 'neutral'">
                                 {{ $opportunity->status->label() }}
-                            </span>
+                            </x-ui.badge>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
-                                <button type="button" wire:click="openQuickNote({{ $opportunity->id }})"
-                                    class="inline-flex rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                                <x-ui.button type="button" size="sm" variant="secondary" wire:click="openQuickNote({{ $opportunity->id }})">
                                     Agregar nota
-                                </button>
-                                <a href="{{ route('ventas.show', $opportunity) }}"
-                                    class="inline-flex rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                                </x-ui.button>
+                                <x-ui.button href="{{ route('ventas.show', $opportunity) }}" size="sm" variant="secondary">
                                     Ver detalle
-                                </a>
+                                </x-ui.button>
                             </div>
                         </td>
                     </tr>
@@ -124,11 +148,10 @@
                         </td>
                     </tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
+        </x-ui.table>
+    </x-ui.card>
 
-    <div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
         {{ $opportunities->links() }}
     </div>
 
