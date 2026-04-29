@@ -84,6 +84,38 @@
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-lg font-semibold text-slate-900">Canal y atención</div>
+                                <p class="mt-1 text-sm text-slate-500">Ventana operativa y metadatos básicos del canal de ingreso.</p>
+                            </div>
+                            <x-ui.badge :variant="$opportunity->source->value === 'whatsapp' ? 'success' : 'neutral'">{{ $opportunity->source->label() }}</x-ui.badge>
+                        </div>
+                        <div class="grid gap-4 text-sm text-slate-700 md:grid-cols-2">
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-slate-500">Último mensaje cliente</div>
+                                <div class="mt-1">{{ $opportunity->last_customer_message_at?->format('d/m/Y H:i') ?? 'Sin registro' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-slate-500">Vencimiento ventana</div>
+                                <div class="mt-1">{{ $opportunity->customer_service_window_expires_at?->format('d/m/Y H:i') ?? 'Sin ventana activa' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-slate-500">Respuesta libre</div>
+                                <div class="mt-2">
+                                    <x-ui.badge :variant="$opportunity->can_reply_freely ? 'success' : 'warning'">
+                                        {{ $opportunity->can_reply_freely ? 'Disponible' : 'Requiere template' }}
+                                    </x-ui.badge>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-slate-500">WhatsApp ID</div>
+                                <div class="mt-1 break-all">{{ $opportunity->whatsapp_contact_id ?: 'Sin dato' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                         <div class="mb-4 text-lg font-semibold text-slate-900">Notas comerciales</div>
                         <div class="space-y-3">
                             <textarea wire:model.defer="newNote" rows="4" class="w-full rounded-lg border border-slate-200 px-4 py-2" placeholder="Registrá seguimiento, acuerdos o próximos pasos..."></textarea>
@@ -104,6 +136,39 @@
                                     Todavía no hay notas cargadas.
                                 </div>
                             @endforelse
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-lg font-semibold text-slate-900">Mensajes del canal</div>
+                                <p class="mt-1 text-sm text-slate-500">Historial entrante y saliente preparado para el futuro chat unificado.</p>
+                            </div>
+                            <x-ui.badge variant="info">{{ $opportunity->messages->count() }} mensajes</x-ui.badge>
+                        </div>
+
+                        <div class="space-y-3">
+                            @forelse($opportunity->messages as $message)
+                                <div class="flex {{ $message->direction->value === 'outbound' ? 'justify-end' : 'justify-start' }}">
+                                    <div class="max-w-2xl rounded-2xl border px-4 py-3 text-sm shadow-sm {{ $message->direction->value === 'outbound' ? 'border-indigo-200 bg-indigo-50 text-indigo-950' : 'border-slate-200 bg-slate-50 text-slate-800' }}">
+                                        <div class="flex items-center gap-2">
+                                            <x-ui.badge size="sm" :variant="$message->direction->value === 'outbound' ? 'primary' : 'neutral'">{{ $message->direction->label() }}</x-ui.badge>
+                                            <x-ui.badge size="sm" variant="info">{{ $message->type->label() }}</x-ui.badge>
+                                        </div>
+                                        <div class="mt-3 whitespace-pre-wrap">{{ $message->content ?: 'Mensaje sin texto asociado.' }}</div>
+                                        <div class="mt-3 text-xs text-slate-500">{{ $message->messaged_at?->format('d/m/Y H:i') ?? 'Sin fecha' }}</div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                                    Todavía no hay mensajes almacenados para esta oportunidad.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <div class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                            La respuesta desde el CRM y los templates se integrarán en la siguiente etapa sobre este mismo historial.
                         </div>
                     </div>
                 </div>

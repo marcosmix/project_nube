@@ -1,15 +1,18 @@
 <?php
 
 use App\Http\Controllers\Cobros\PaymentReceiptController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WhatsApp\WebhookController;
 use App\Livewire\Developers\DevelopersIndex;
 use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Sales\Show as SalesShow;
+use App\Livewire\Settings\Whatsapp as WhatsappSettings;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
+Route::get('dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -17,7 +20,11 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+Route::get('/webhooks/whatsapp', [WebhookController::class, 'verify'])->name('whatsapp.webhook.verify');
+Route::post('/webhooks/whatsapp', [WebhookController::class, 'handle'])->name('whatsapp.webhook.handle');
+
 Route::middleware(['auth'])->group(function () {
+    Route::get('/configuracion/whatsapp', WhatsappSettings::class)->name('settings.whatsapp');
     Route::get('/proyectos', ProjectsIndex::class)->name('proyectos.index');
     Route::get('/proyectos/{project}', ProjectsShow::class)->name('proyectos.show');
 });

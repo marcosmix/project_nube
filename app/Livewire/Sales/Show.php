@@ -27,6 +27,7 @@ class Show extends Component
             'notes.byUser',
             'statusLogs.byUser',
             'project',
+            'messages',
         ]);
 
         $this->selectedStatus = $this->opportunity->status->value;
@@ -42,7 +43,7 @@ class Show extends Component
             $this->opportunity,
             $this->selectedStatus,
             Auth::user(),
-        );
+        )->load(['client.contact', 'responsibleUser', 'notes.byUser', 'statusLogs.byUser', 'project', 'messages']);
 
         $this->dispatch('toast', type: 'success', message: 'Estado comercial actualizado');
     }
@@ -56,7 +57,7 @@ class Show extends Component
         $addOpportunityNoteAction->execute($this->opportunity, $this->newNote, Auth::user());
 
         $this->newNote = '';
-        $this->opportunity->refresh()->load(['client.contact', 'responsibleUser', 'notes.byUser', 'statusLogs.byUser', 'project']);
+        $this->opportunity->refresh()->load(['client.contact', 'responsibleUser', 'notes.byUser', 'statusLogs.byUser', 'project', 'messages']);
 
         $this->dispatch('toast', type: 'success', message: 'Nota agregada');
     }

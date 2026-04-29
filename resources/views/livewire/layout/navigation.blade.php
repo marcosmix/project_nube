@@ -86,6 +86,10 @@ new class extends Component
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        <x-dropdown-link :href="route('settings.whatsapp')" wire:navigate>
+                            {{ __('Configuración WhatsApp') }}
+                        </x-dropdown-link>
+
                         <!-- Authentication -->
                         <button wire:click="logout" class="w-full text-start">
                             <x-dropdown-link>
@@ -151,6 +155,10 @@ new class extends Component
                 <div class="mt-4 space-y-2">
                     <x-responsive-nav-link :href="route('profile')" wire:navigate>
                         {{ __('Profile') }}
+                    </x-responsive-nav-link>
+
+                    <x-responsive-nav-link :href="route('settings.whatsapp')" wire:navigate>
+                        {{ __('Configuración WhatsApp') }}
                     </x-responsive-nav-link>
 
                     <!-- Authentication -->

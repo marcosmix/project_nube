@@ -20,7 +20,12 @@ class Opportunity extends Model
         'name',
         'status',
         'source',
+        'whatsapp_contact_id',
+        'external_conversation_id',
         'first_contact_at',
+        'first_customer_message_at',
+        'last_customer_message_at',
+        'customer_service_window_expires_at',
         'contact_name',
         'contact_phone',
         'contact_email',
@@ -32,6 +37,9 @@ class Opportunity extends Model
         'status' => OpportunityStatus::class,
         'source' => OpportunitySource::class,
         'first_contact_at' => 'date',
+        'first_customer_message_at' => 'datetime',
+        'last_customer_message_at' => 'datetime',
+        'customer_service_window_expires_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
@@ -54,6 +62,11 @@ class Opportunity extends Model
         return $this->hasMany(OpportunityStatusLog::class)->latest('created_at');
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(OpportunityMessage::class)->orderBy('messaged_at');
+    }
+
     public function project(): HasOne
     {
         return $this->hasOne(Project::class);
@@ -71,6 +84,7 @@ class Opportunity extends Model
                 ->orWhere('contact_name', 'like', "%{$term}%")
                 ->orWhere('contact_email', 'like', "%{$term}%")
                 ->orWhere('contact_phone', 'like', "%{$term}%")
+                ->orWhereHas('messages', fn ($messageQuery) => $messageQuery->where('content', 'like', "%{$term}%"))
                 ->orWhereHas('client', function ($clientQuery) use ($term) {
                     $clientQuery
                         ->where('organization_name', 'like', "%{$term}%")
@@ -79,6 +93,29 @@ class Opportunity extends Model
                             ->orWhere('last_name', 'like', "%{$term}%"));
                 });
         });
+    }
+
+
+    public function getCanReplyFreelyAttribute(): bool
+    {
+        return $this->customer_service_window_expires_at?->isFuture() ?? false;
+    }
+
+    public function getRequiresTemplateAttribute(): bool
+    {
+        return ! $this->can_reply_freely && $this->last_customer_message_at !== null;
+    }
+
+    public function syncCustomerServiceWindow(?\Illuminate\Support\Carbon $receivedAt = null): void
+    {
+        $receivedAt ??= now();
+
+        if (! $this->first_customer_message_at) {
+            $this->first_customer_message_at = $receivedAt;
+        }
+
+        $this->last_customer_message_at = $receivedAt;
+        $this->customer_service_window_expires_at = $receivedAt->copy()->addHours(24);
     }
 
     public function getDisplayContactAttribute(): string
