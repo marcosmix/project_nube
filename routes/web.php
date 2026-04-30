@@ -8,9 +8,12 @@ use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Sales\Show as SalesShow;
 use App\Livewire\Settings\Whatsapp as WhatsappSettings;
+use App\Models\PaymentFlow;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
+
+Route::bind('paymentFlow', fn (string $value) => PaymentFlow::withTrashed()->findOrFail($value));
 
 Route::get('dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])

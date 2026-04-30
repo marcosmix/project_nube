@@ -389,7 +389,11 @@
                             </div>
                             <div class="space-y-3">
                                 @forelse ($overdueInstallments as $installment)
-                                    <a href="{{ route('cobros.show', $installment['flowId']) }}" class="block rounded-2xl border border-rose-200/80 bg-white/80 p-3 transition hover:-translate-y-0.5 hover:shadow-sm">
+                                    @php($flowUrl = $installment['flowId'] ? route('cobros.show', $installment['flowId']) : null)
+                                    <a
+                                        @if($flowUrl) href="{{ $flowUrl }}" @endif
+                                        class="block rounded-2xl border border-rose-200/80 bg-white/80 p-3 transition hover:-translate-y-0.5 hover:shadow-sm {{ $flowUrl ? '' : 'pointer-events-none opacity-70' }}"
+                                    >
                                         <div class="text-sm font-medium text-slate-900">{{ $installment['projectName'] }} · #{{ $installment['number'] }}</div>
                                         <div class="mt-1 text-xs text-slate-500">{{ $installment['client'] }} · {{ abs($installment['daysDelta']) }} dias</div>
                                         <div class="mt-2 text-sm font-semibold text-rose-700">${{ number_format($installment['balanceDue'], 0, ',', '.') }}</div>
@@ -407,7 +411,11 @@
                             </div>
                             <div class="space-y-3">
                                 @forelse ($upcomingInstallments as $installment)
-                                    <a href="{{ route('cobros.show', $installment['flowId']) }}" class="block rounded-2xl border border-amber-200/80 bg-white/80 p-3 transition hover:-translate-y-0.5 hover:shadow-sm">
+                                    @php($flowUrl = $installment['flowId'] ? route('cobros.show', $installment['flowId']) : null)
+                                    <a
+                                        @if($flowUrl) href="{{ $flowUrl }}" @endif
+                                        class="block rounded-2xl border border-amber-200/80 bg-white/80 p-3 transition hover:-translate-y-0.5 hover:shadow-sm {{ $flowUrl ? '' : 'pointer-events-none opacity-70' }}"
+                                    >
                                         <div class="text-sm font-medium text-slate-900">{{ $installment['projectName'] }} · #{{ $installment['number'] }}</div>
                                         <div class="mt-1 text-xs text-slate-500">{{ $installment['client'] }} · {{ $installment['dueDate']?->format('d/m') ?? '-' }}</div>
                                         <div class="mt-2 text-sm font-semibold text-amber-700">${{ number_format($installment['balanceDue'], 0, ',', '.') }}</div>

@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Clients;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use Illuminate\Validation\Rule;
-
+use App\Actions\Clients\DeleteClientAction;
 use App\Models\Client;
 use App\Models\Contact;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public string $search = '';
 
@@ -25,27 +25,38 @@ class Index extends Component
 
     // IDs para editar
     public ?int $clientId = null;
+
     public ?int $contactId = null;
 
     // Contact fields
     public string $first_name = '';
+
     public string $last_name = '';
+
     public string $email = '';
+
     public ?string $phone = null;
+
     public ?string $birthdate = null; // YYYY-MM-DD
+
     public ?string $job_title = null;
 
     // Client fields
     public string $organization_name = '';
+
     public ?string $industry = null;
+
     public ?string $address = null;
 
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
     public $company_logo_upload = null;
+
     public ?string $company_logo_path = null;
 
     public string $company_size = 'small'; // small|medium|large
+
     public ?int $score = null; // 1..10
+
     public ?string $notes = null;
 
     public function updatingSearch(): void
@@ -69,18 +80,18 @@ class Index extends Component
         $this->contactId = $client->contact_id;
 
         $this->first_name = $client->contact->first_name;
-        $this->last_name  = $client->contact->last_name;
-        $this->email      = $client->contact->email;
-        $this->phone      = $client->contact->phone;
-        $this->birthdate  = optional($client->contact->birthdate)->format('Y-m-d');
-        $this->job_title  = $client->contact->job_title;
+        $this->last_name = $client->contact->last_name;
+        $this->email = $client->contact->email;
+        $this->phone = $client->contact->phone;
+        $this->birthdate = optional($client->contact->birthdate)->format('Y-m-d');
+        $this->job_title = $client->contact->job_title;
 
         $this->organization_name = $client->organization_name;
-        $this->industry          = $client->industry;
-        $this->address           = $client->address;
-        $this->company_size      = $client->company_size;
-        $this->score             = $client->score;
-        $this->notes             = $client->notes;
+        $this->industry = $client->industry;
+        $this->address = $client->address;
+        $this->company_size = $client->company_size;
+        $this->score = $client->score;
+        $this->notes = $client->notes;
 
         $this->company_logo_upload = null;
         $this->company_logo_path = $client->company_logo;
@@ -96,12 +107,18 @@ class Index extends Component
         $this->resetValidation();
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, DeleteClientAction $deleteClientAction): void
     {
-        $client = Client::findOrFail($id);
-        $client->delete(); // soft delete ✅
-        // opcional: si borraste el último de la página, podés caer en una página vacía.
-        // si te molesta eso, lo ajustamos después con un helper.
+        $client = Client::query()->withCount(['projects', 'opportunities'])->findOrFail($id);
+
+        $deleteClientAction->execute($client);
+
+        session()->flash(
+            'status',
+            "Cliente eliminado de forma logica. Tambien se archivaron {$client->projects_count} proyecto(s) y {$client->opportunities_count} oportunidad(es)."
+        );
+
+        $this->resetPage();
     }
 
     public function save(): void
@@ -119,42 +136,42 @@ class Index extends Component
 
             $client->contact->update([
                 'first_name' => $this->first_name,
-                'last_name'  => $this->last_name,
-                'email'      => $this->email,
-                'phone'      => $this->phone,
-                'birthdate'  => $this->birthdate,
-                'job_title'  => $this->job_title,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'phone' => $this->phone,
+                'birthdate' => $this->birthdate,
+                'job_title' => $this->job_title,
             ]);
 
             $client->update([
                 'organization_name' => $this->organization_name,
-                'industry'          => $this->industry,
-                'address'           => $this->address,
-                'company_size'      => $this->company_size,
-                'score'             => $this->score,
-                'notes'             => $this->notes,
-                ...( $logoPath ? ['company_logo' => $logoPath] : [] ),
+                'industry' => $this->industry,
+                'address' => $this->address,
+                'company_size' => $this->company_size,
+                'score' => $this->score,
+                'notes' => $this->notes,
+                ...($logoPath ? ['company_logo' => $logoPath] : []),
             ]);
         } else {
             // CREATE (contact + client)
             $contact = Contact::create([
                 'first_name' => $this->first_name,
-                'last_name'  => $this->last_name,
-                'email'      => $this->email,
-                'phone'      => $this->phone,
-                'birthdate'  => $this->birthdate,
-                'job_title'  => $this->job_title,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'phone' => $this->phone,
+                'birthdate' => $this->birthdate,
+                'job_title' => $this->job_title,
             ]);
 
             Client::create([
-                'contact_id'        => $contact->id,
+                'contact_id' => $contact->id,
                 'organization_name' => $this->organization_name,
-                'industry'          => $this->industry,
-                'address'           => $this->address,
-                'company_logo'      => $logoPath,
-                'company_size'      => $this->company_size,
-                'score'             => $this->score,
-                'notes'             => $this->notes,
+                'industry' => $this->industry,
+                'address' => $this->address,
+                'company_logo' => $logoPath,
+                'company_size' => $this->company_size,
+                'score' => $this->score,
+                'notes' => $this->notes,
             ]);
         }
 
@@ -166,23 +183,23 @@ class Index extends Component
     {
         return [
             'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => [
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => [
                 'required', 'email', 'max:255',
                 Rule::unique('contacts', 'email')->ignore($this->contactId),
             ],
-            'phone'      => ['nullable', 'string', 'max:50'],
-            'birthdate'  => ['nullable', 'date'],
-            'job_title'  => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'birthdate' => ['nullable', 'date'],
+            'job_title' => ['nullable', 'string', 'max:255'],
 
             'organization_name' => ['required', 'string', 'max:255'],
-            'industry'          => ['nullable', 'string', 'max:255'],
-            'address'           => ['nullable', 'string', 'max:255'],
+            'industry' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
             'company_logo_upload' => ['nullable', 'image', 'max:2048'],
 
-            'company_size' => ['required', Rule::in(['small','medium','large'])],
-            'score'        => ['nullable', 'integer', 'min:1', 'max:10'],
-            'notes'        => ['nullable', 'string', 'max:2000'],
+            'company_size' => ['required', Rule::in(['small', 'medium', 'large'])],
+            'score' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
@@ -217,18 +234,18 @@ class Index extends Component
             ->with('contact')
             ->when($this->search !== '', function ($q) {
                 $q->where('organization_name', 'like', "%{$this->search}%")
-                  ->orWhereHas('contact', function ($c) {
-                      $c->where('first_name', 'like', "%{$this->search}%")
-                        ->orWhere('last_name', 'like', "%{$this->search}%");
-                  });
+                    ->orWhereHas('contact', function ($c) {
+                        $c->where('first_name', 'like', "%{$this->search}%")
+                            ->orWhere('last_name', 'like', "%{$this->search}%");
+                    });
             })
             ->latest()
             ->paginate(9);
 
         $stats = [
-            'total' => Client::count(),
-            'with_score' => Client::whereNotNull('score')->count(),
-            'avg_score' => round((float) Client::avg('score'), 1),
+            'total' => Client::query()->count(),
+            'with_score' => Client::query()->whereNotNull('score')->count(),
+            'avg_score' => round((float) Client::query()->avg('score'), 1),
         ];
 
         return view('livewire.clients.index', [

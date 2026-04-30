@@ -1,5 +1,34 @@
 <x-ui.page-container>
     <div class="space-y-6">
+        @if (session('status'))
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        @if($pendingDeleteProjectId)
+            <div class="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="space-y-1">
+                        <p class="font-semibold">Eliminar proyecto: {{ $pendingDeleteProjectName }}</p>
+                        <p>
+                            Tiene {{ $pendingDeleteProjectFlows }} flujo(s) de cobro asociados
+                            @if($pendingDeleteProjectOpenFlows > 0)
+                                y {{ $pendingDeleteProjectOpenFlows }} sigue(n) abierto(s)
+                            @endif.
+                            Puedes archivar solo el proyecto o archivar tambien sus cobros.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <x-ui.button type="button" variant="secondary" wire:click="cancelDelete">Cancelar</x-ui.button>
+                        <x-ui.button type="button" variant="secondary" wire:click="deleteKeepingFlows">Solo proyecto</x-ui.button>
+                        <x-ui.button type="button" variant="danger" wire:click="deleteWithFlows">Proyecto y cobros</x-ui.button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <x-ui.section-header
             title="Proyectos"
             description="Monitorea estado, riesgo y valor del portafolio sin salir del flujo operativo."
@@ -66,8 +95,7 @@
                 }
             @endphp
 
-            <a href="{{ route('proyectos.show', $project) }}"
-                class="block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md">
+            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md">
                 <div class="h-2 {{ $bar }}"></div>
 
                 <div class="p-6">
@@ -100,9 +128,14 @@
                                     </div>
                         </div>
 
-                        <span class="rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                            Ver
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('proyectos.show', $project) }}" class="rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-200">
+                                Ver
+                            </a>
+                            <x-ui.button type="button" size="sm" variant="danger" wire:click="confirmDelete({{ $project->id }})">
+                                Eliminar
+                            </x-ui.button>
+                        </div>
                     </div>
 
                             {{-- Client --}}
@@ -166,7 +199,7 @@
                         </div>
                     @endif
                 </div>
-            </a>
+            </div>
         @empty
             <div class="lg:col-span-2">
                 <x-ui.empty-state title="No se encontraron proyectos" description="Prueba con otro estado o una busqueda mas amplia para recuperar resultados." />

@@ -2,14 +2,17 @@
 
 namespace App\Livewire\Projects;
 
+use App\Actions\Projects\DeleteProjectAction;
 use App\Models\Client;
 use App\Models\Developer;
 use App\Models\Project;
 use App\Models\ProjectStatusLog;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
 class Index extends Component
 {
     use WithPagination;
@@ -19,6 +22,14 @@ class Index extends Component
     public string $statusFilter = 'all';
 
     public bool $showCreateModal = false;
+
+    public ?int $pendingDeleteProjectId = null;
+
+    public string $pendingDeleteProjectName = '';
+
+    public int $pendingDeleteProjectFlows = 0;
+
+    public int $pendingDeleteProjectOpenFlows = 0;
 
     // Form (simple)
     public array $form = [
@@ -69,6 +80,57 @@ class Index extends Component
     public function closeCreate(): void
     {
         $this->showCreateModal = false;
+    }
+
+    public function confirmDelete(int $projectId): void
+    {
+        $project = Project::query()
+            ->withCount([
+                'paymentFlows',
+                'paymentFlows as open_payment_flows_count' => fn ($query) => $query->whereIn('status', ['draft', 'active']),
+            ])
+            ->findOrFail($projectId);
+
+        $this->pendingDeleteProjectId = $project->id;
+        $this->pendingDeleteProjectName = $project->name;
+        $this->pendingDeleteProjectFlows = (int) $project->payment_flows_count;
+        $this->pendingDeleteProjectOpenFlows = (int) $project->open_payment_flows_count;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->pendingDeleteProjectId = null;
+        $this->pendingDeleteProjectName = '';
+        $this->pendingDeleteProjectFlows = 0;
+        $this->pendingDeleteProjectOpenFlows = 0;
+    }
+
+    public function deleteKeepingFlows(DeleteProjectAction $deleteProjectAction): void
+    {
+        $project = $this->resolvePendingProject();
+
+        $deleteProjectAction->execute($project, false);
+
+        session()->flash(
+            'status',
+            "Proyecto {$project->name} eliminado de forma logica. Los {$this->pendingDeleteProjectFlows} flujo(s) de cobro siguen disponibles."
+        );
+
+        $this->finishDelete();
+    }
+
+    public function deleteWithFlows(DeleteProjectAction $deleteProjectAction): void
+    {
+        $project = $this->resolvePendingProject();
+
+        $deleteProjectAction->execute($project, true);
+
+        session()->flash(
+            'status',
+            "Proyecto {$project->name} y sus {$this->pendingDeleteProjectFlows} flujo(s) de cobro quedaron archivados con soft delete."
+        );
+
+        $this->finishDelete();
     }
 
     private function resetForm(): void
@@ -196,10 +258,25 @@ class Index extends Component
             ->get();
     }
 
+    private function resolvePendingProject(): Project
+    {
+        return Project::query()->findOrFail($this->pendingDeleteProjectId);
+    }
+
+    private function finishDelete(): void
+    {
+        $this->cancelDelete();
+        $this->resetPage();
+    }
+
     public function render()
     {
         $projects = Project::query()
             ->with(['client.contact', 'developers.contact'])
+            ->withCount([
+                'paymentFlows',
+                'paymentFlows as open_payment_flows_count' => fn ($query) => $query->whereIn('status', ['draft', 'active']),
+            ])
             ->search($this->search)
             ->statusFilter($this->statusFilter)
             ->latest()
@@ -207,6 +284,6 @@ class Index extends Component
 
         return view('livewire.projects.index', [
             'projects' => $projects,
-        ])->layout('layouts.app');
+        ]);
     }
 }

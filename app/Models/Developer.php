@@ -56,13 +56,12 @@ class Developer extends Model
 
     public function contact(): BelongsTo
     {
-        return $this->belongsTo(Contact::class);
+        return $this->belongsTo(Contact::class)->withTrashed();
     }
-
 
     public function projects(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class)->withTimestamps();
+        return $this->belongsToMany(Project::class)->withTimestamps()->withTrashed();
     }
 
     public function getStatusLabelAttribute(): string
@@ -82,6 +81,6 @@ class Developer extends Model
 
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->profile_photo ? asset('storage/' . $this->profile_photo) : null;
+        return $this->profile_photo ? asset('storage/'.$this->profile_photo) : null;
     }
 }

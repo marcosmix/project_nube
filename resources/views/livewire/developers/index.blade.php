@@ -1,5 +1,11 @@
 <x-ui.page-container>
     <div class="space-y-6">
+        @if (session('status'))
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {{ session('status') }}
+            </div>
+        @endif
+
         <x-ui.section-header
             title="Developers"
             description="Gestiona capacidad, disponibilidad y skills del equipo tecnico con una interfaz consistente."
@@ -111,7 +117,7 @@
                             <button
                                 wire:click="delete({{ $dev->id }})"
                                 @click="open=false"
-                                wire:confirm="¿Seguro que querés eliminar este developer?"
+                                wire:confirm="Se eliminara este developer de forma logica y se conservara su historial de asignaciones."
                                 class="w-full rounded-xl px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
                             >Eliminar</button>
                         </div>

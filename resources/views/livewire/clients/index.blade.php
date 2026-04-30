@@ -1,4 +1,10 @@
 <div class="space-y-6">
+    @if (session('status'))
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ session('status') }}
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <x-ui.stat-card label="Total clientes" :value="number_format($stats['total'], 0, ',', '.')" hint="Organizaciones registradas en la cartera." tone="primary" />
         <x-ui.stat-card label="Con puntuacion" :value="number_format($stats['with_score'], 0, ',', '.')" hint="Clientes con evaluacion interna cargada." tone="accent" />
@@ -54,7 +60,13 @@
                             <x-ui.button type="button" size="sm" variant="secondary" wire:click="edit({{ $client->id }})">
                                 Editar
                             </x-ui.button>
-                            <x-ui.button type="button" size="sm" variant="danger" wire:click="delete({{ $client->id }})">
+                            <x-ui.button
+                                type="button"
+                                size="sm"
+                                variant="danger"
+                                wire:click="delete({{ $client->id }})"
+                                wire:confirm="Se eliminara este cliente de forma logica y tambien se archivaran sus proyectos, cobros y oportunidades."
+                            >
                                 Eliminar
                             </x-ui.button>
                         </div>

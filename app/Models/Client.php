@@ -31,7 +31,7 @@ class Client extends Model
 
     public function contact(): BelongsTo
     {
-        return $this->belongsTo(Contact::class);
+        return $this->belongsTo(Contact::class)->withTrashed();
     }
 
     public function projects(): HasMany

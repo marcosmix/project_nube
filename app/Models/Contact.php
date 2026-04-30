@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'first_name',
@@ -25,12 +26,12 @@ class Contact extends Model
 
     public function client(): HasOne
     {
-        return $this->hasOne(Client::class);
+        return $this->hasOne(Client::class)->withTrashed();
     }
 
     public function developer(): HasOne
     {
-        return $this->hasOne(Developer::class);
+        return $this->hasOne(Developer::class)->withTrashed();
     }
 
     public function getFullNameAttribute(): string

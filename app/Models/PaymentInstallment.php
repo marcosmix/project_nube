@@ -25,7 +25,7 @@ class PaymentInstallment extends Model
 
     public function flow(): BelongsTo
     {
-        return $this->belongsTo(PaymentFlow::class, 'payment_flow_id');
+        return $this->belongsTo(PaymentFlow::class, 'payment_flow_id')->withTrashed();
     }
 
     public function payments(): HasMany

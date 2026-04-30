@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Developers;
 
+use App\Actions\Developers\DeleteDeveloperAction;
 use App\Models\Contact;
 use App\Models\Developer;
 use Illuminate\Support\Facades\Schema;
@@ -121,9 +122,17 @@ class DevelopersIndex extends Component
         $this->open = true;
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, DeleteDeveloperAction $deleteDeveloperAction): void
     {
-        Developer::query()->findOrFail($id)->delete();
+        $developer = Developer::query()->withCount('projects')->findOrFail($id);
+
+        $deleteDeveloperAction->execute($developer);
+
+        session()->flash(
+            'status',
+            "Developer eliminado de forma logica. Se conserva el historial de {$developer->projects_count} proyecto(s) asignado(s)."
+        );
+
         $this->resetPage();
     }
 
@@ -536,14 +545,14 @@ class DevelopersIndex extends Component
 
         return view('livewire.developers.index', [
             'developers' => $developers,
-            'total' => Developer::count(),
-            'activos' => Developer::where('status', 'active')->count(),
-            'fullTime' => Developer::where('availability', 'full_time')->count(),
-            'freelance' => Developer::where('availability', 'freelance')->count(),
+            'total' => Developer::query()->count(),
+            'activos' => Developer::query()->where('status', 'active')->count(),
+            'fullTime' => Developer::query()->where('availability', 'full_time')->count(),
+            'freelance' => Developer::query()->where('availability', 'freelance')->count(),
             'availableBySkill' => $this->availableDevelopersBySkill(),
             'statuses' => Developer::STATUSES,
             'availabilities' => Developer::AVAILABILITIES,
             'levels' => Developer::LEVELS,
-        ])->layout('layouts.app');
+        ]);
     }
 }

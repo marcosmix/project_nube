@@ -45,17 +45,17 @@ class Project extends Model
 
     public function client()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class)->withTrashed();
     }
 
     public function opportunity(): BelongsTo
     {
-        return $this->belongsTo(Opportunity::class);
+        return $this->belongsTo(Opportunity::class)->withTrashed();
     }
 
     public function developers()
     {
-        return $this->belongsToMany(Developer::class)->withTimestamps();
+        return $this->belongsToMany(Developer::class)->withTimestamps()->withTrashed();
     }
 
     public function statusLogs()
