@@ -11,7 +11,14 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $status = '';
+
+    public function mount(): void
+    {
+        $this->search = (string) request()->query('search', '');
+        $this->status = (string) request()->query('status', '');
+    }
 
     public function updatingSearch(): void
     {

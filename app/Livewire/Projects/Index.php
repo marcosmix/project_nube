@@ -43,6 +43,12 @@ class Index extends Component
 
     public array $selectedDevelopers = [];
 
+    public function mount(): void
+    {
+        $this->search = (string) request()->query('search', '');
+        $this->statusFilter = (string) request()->query('status', 'all');
+    }
+
     public function updatedSearch()
     {
         $this->resetPage();

@@ -22,6 +22,7 @@ class BuildDashboardDataAction
     {
         $period = $this->normalizePeriod($period);
         [$start, $end, $label] = $this->resolvePeriodRange($period);
+        [$previousStart, $previousEnd] = $this->resolvePreviousPeriodRange($period, $start, $end);
         $today = now()->startOfDay();
 
         $salesPeriod = Opportunity::query()->whereBetween('created_at', [$start, $end]);
@@ -35,6 +36,20 @@ class BuildDashboardDataAction
             ->where('status', PaymentStatus::Posted->value)
             ->whereBetween('paid_at', [$start, $end])
             ->sum('amount');
+
+        $previousSalesTotal = Opportunity::query()->whereBetween('created_at', [$previousStart, $previousEnd])->count();
+        $previousSalesWon = Opportunity::query()
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->where('status', OpportunityStatus::Won->value)
+            ->count();
+        $previousCollectedAmount = (float) Payment::query()
+            ->where('status', PaymentStatus::Posted->value)
+            ->whereBetween('paid_at', [$previousStart, $previousEnd])
+            ->sum('amount');
+        $previousExecutionProjects = Project::query()
+            ->where('status', ProjectStatus::Execution->value)
+            ->where('updated_at', '<=', $previousEnd)
+            ->count();
 
         $executionProjects = Project::query()->where('status', ProjectStatus::Execution->value)->count();
         $pausedProjects = Project::query()->where('status', ProjectStatus::Paused->value)->count();
@@ -72,24 +87,32 @@ class BuildDashboardDataAction
                     'label' => 'Leads del periodo',
                     'displayValue' => number_format($salesTotal, 0, ',', '.'),
                     'hint' => $salesWon.' cerrados / '.$salesFailed.' caidos',
+                    'change' => $this->buildComparison($salesTotal, $previousSalesTotal),
                     'tone' => 'primary',
                 ],
                 [
                     'label' => 'Conversion',
                     'displayValue' => $this->percentage($salesWon, $salesTotal),
                     'hint' => 'Sobre oportunidades creadas en '.$label,
+                    'change' => $this->buildComparison(
+                        $this->percentageInt($salesWon, $salesTotal),
+                        $this->percentageInt($previousSalesWon, $previousSalesTotal),
+                        isPercentage: true,
+                    ),
                     'tone' => 'success',
                 ],
                 [
                     'label' => 'Ejecucion activa',
                     'displayValue' => number_format($executionProjects, 0, ',', '.'),
                     'hint' => $delayedProjects.' demorados / '.$withDebtProjects.' con deuda',
+                    'change' => $this->buildComparison($executionProjects, $previousExecutionProjects),
                     'tone' => 'accent',
                 ],
                 [
                     'label' => 'Cobrado',
                     'displayValue' => '$'.number_format($collectedAmount, 0, ',', '.'),
                     'hint' => $overdueInstallmentsCount.' cuotas vencidas pendientes',
+                    'change' => $this->buildComparison($collectedAmount, $previousCollectedAmount, prefix: '$'),
                     'tone' => 'warning',
                 ],
             ],
@@ -168,6 +191,24 @@ class BuildDashboardDataAction
             ['value' => 'last_month', 'label' => 'Ultimo mes'],
             ['value' => 'quarter', 'label' => 'Trimestre'],
         ];
+    }
+
+    protected function resolvePreviousPeriodRange(string $period, Carbon $start, Carbon $end): array
+    {
+        return match ($period) {
+            'last_month' => [
+                $start->copy()->subMonthNoOverflow()->startOfMonth(),
+                $start->copy()->subMonthNoOverflow()->endOfMonth(),
+            ],
+            'quarter' => [
+                $start->copy()->subQuarter()->startOfQuarter(),
+                $start->copy()->subQuarter()->endOfQuarter(),
+            ],
+            default => [
+                $start->copy()->subMonthNoOverflow()->startOfMonth(),
+                $start->copy()->subMonthNoOverflow()->endOfMonth(),
+            ],
+        };
     }
 
     protected function sourceBreakdown(Carbon $start, Carbon $end, int $salesTotal): Collection
@@ -595,5 +636,27 @@ class BuildDashboardDataAction
             $count >= 1 => 'bg-slate-300',
             default => 'bg-slate-100',
         };
+    }
+
+    protected function buildComparison(float|int $current, float|int $previous, bool $isPercentage = false, string $prefix = ''): array
+    {
+        $delta = $current - $previous;
+        $direction = $delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat');
+        $tone = match ($direction) {
+            'up' => 'success',
+            'down' => 'danger',
+            default => 'neutral',
+        };
+
+        $formattedDelta = $isPercentage
+            ? abs((int) round($delta)).' pp'
+            : $prefix.number_format(abs((float) $delta), 0, ',', '.');
+
+        return [
+            'direction' => $direction,
+            'tone' => $tone,
+            'label' => $direction === 'flat' ? 'Sin cambio' : (($direction === 'up' ? '+' : '-').$formattedDelta),
+            'context' => 'vs periodo anterior',
+        ];
     }
 }

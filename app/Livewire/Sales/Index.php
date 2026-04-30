@@ -39,6 +39,10 @@ class Index extends Component
 
     public function mount(): void
     {
+        $this->search = (string) request()->query('search', '');
+        $this->status = (string) request()->query('status', '');
+        $this->source = (string) request()->query('source', '');
+        $this->responsibleUserId = (string) request()->query('responsible', '');
         $this->resetCreateForm();
     }
 

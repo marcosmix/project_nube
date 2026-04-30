@@ -44,6 +44,13 @@
             default => 'bg-slate-300',
         };
     };
+
+    $kpiLinks = [
+        route('ventas.index', ['status' => 'new']),
+        route('ventas.index', ['status' => 'won']),
+        route('proyectos.index', ['status' => 'execution']),
+        route('cobros.index'),
+    ];
 @endphp
 
 <x-app-layout>
@@ -85,13 +92,17 @@
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        @foreach ($kpis as $item)
-                            <x-ui.stat-card
-                                :label="$item['label']"
-                                :value="$item['displayValue']"
-                                :hint="$item['hint']"
-                                :tone="$item['tone']"
-                            />
+                        @foreach ($kpis as $index => $item)
+                            <a href="{{ $kpiLinks[$index] ?? route('dashboard') }}" class="block transition hover:-translate-y-0.5">
+                                <x-ui.stat-card
+                                    :label="$item['label']"
+                                    :value="$item['displayValue']"
+                                    :hint="$item['hint']"
+                                    :tone="$item['tone']"
+                                    :change="$item['change'] ?? null"
+                                    class="h-full"
+                                />
+                            </a>
                         @endforeach
                     </div>
 
@@ -113,7 +124,7 @@
                                     @php
                                         $widthClass = $barWidthClass(max(($source['total'] / $maxSourceTotal) * 100, 10));
                                     @endphp
-                                    <div class="space-y-2">
+                                    <a href="{{ route('ventas.index', ['source' => $source['key']]) }}" class="block space-y-2 rounded-2xl px-2 py-2 transition hover:bg-white hover:shadow-sm">
                                         <div class="flex items-center justify-between gap-3 text-sm">
                                             <div>
                                                 <span class="font-medium text-slate-900">{{ $source['label'] }}</span>
@@ -125,7 +136,7 @@
                                         <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
                                             <div class="h-full rounded-full bg-gradient-to-r from-sky-400 via-indigo-500 to-violet-500 {{ $widthClass }}"></div>
                                         </div>
-                                    </div>
+                                    </a>
                                 @empty
                                     <x-ui.empty-state title="Sin canales activos" description="Todavia no hay leads registrados en el periodo elegido." class="py-8" />
                                 @endforelse
@@ -212,8 +223,9 @@
                                     $circumference = 314;
                                     $offset = 0;
                                 @endphp
-                                <div class="relative flex h-32 w-32 shrink-0 items-center justify-center">
-                                    <svg viewBox="0 0 120 120" class="h-32 w-32 -rotate-90">
+                                <div class="flex shrink-0 flex-col items-center gap-2">
+                                    <div class="relative flex h-36 w-36 items-center justify-center">
+                                        <svg viewBox="0 0 120 120" class="h-36 w-36 -rotate-90">
                                         <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" stroke-width="16"></circle>
                                         @foreach ($salesOverview['donutSegments'] as $segment)
                                             @php
@@ -224,22 +236,23 @@
                                             @endphp
                                             <circle cx="60" cy="60" r="50" fill="none" stroke="{{ $segment['color'] }}" stroke-width="16" stroke-linecap="round" stroke-dasharray="{{ $dashArray }}" stroke-dashoffset="{{ $dashOffset }}"></circle>
                                         @endforeach
-                                    </svg>
-                                    <div class="absolute text-center">
-                                        <div class="text-2xl font-semibold text-slate-950">{{ number_format($salesOverview['donutTotal'], 0, ',', '.') }}</div>
-                                        <div class="text-xs uppercase tracking-[0.22em] text-slate-400">leads</div>
+                                        </svg>
+                                        <div class="absolute text-center">
+                                            <div class="text-xl font-semibold text-slate-950">{{ number_format($salesOverview['donutTotal'], 0, ',', '.') }}</div>
+                                        </div>
                                     </div>
+                                    <div class="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">leads</div>
                                 </div>
 
-                                <div class="flex-1 space-y-2.5">
+                                <div class="-mt-2 flex-1 space-y-2.5">
                                     @forelse ($salesOverview['donutSegments'] as $segment)
-                                        <div class="flex items-center justify-between gap-3 text-sm">
+                                        <a href="{{ route('ventas.index', ['status' => $segment['key']]) }}" class="flex items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-sm transition hover:bg-white">
                                             <div class="flex items-center gap-2">
                                                 <span class="h-2.5 w-2.5 rounded-full {{ $segmentDotClass($segment['key']) }}"></span>
                                                 <span class="text-slate-700">{{ $segment['label'] }}</span>
                                             </div>
                                             <span class="text-slate-500">{{ $segment['total'] }}</span>
-                                        </div>
+                                        </a>
                                     @empty
                                         <span class="text-sm text-slate-500">Sin datos para el periodo.</span>
                                     @endforelse
@@ -261,7 +274,7 @@
                                     @php
                                         $widthClass = $barWidthClass(max(($row['total'] / $maxProjectTotal) * 100, 10));
                                     @endphp
-                                    <div>
+                                    <a href="{{ route('proyectos.index', ['status' => $row['key']]) }}" class="block rounded-2xl px-2 py-2 transition hover:bg-slate-50">
                                         <div class="mb-2 flex items-center justify-between gap-3 text-sm">
                                             <span class="font-medium text-slate-700">{{ $row['label'] }}</span>
                                             <span class="text-slate-500">{{ $row['total'] }}</span>
@@ -269,7 +282,7 @@
                                         <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
                                             <div class="h-full rounded-full {{ $row['color'] }} {{ $widthClass }}"></div>
                                         </div>
-                                    </div>
+                                    </a>
                                 @endforeach
                             </div>
 
@@ -365,7 +378,7 @@
                             <h3 class="text-lg font-semibold text-slate-950">Cobros a vigilar</h3>
                             <p class="text-sm text-slate-500">Dos listas cortas compartiendo un mismo tercio de pantalla.</p>
                         </div>
-                        <x-ui.button href="{{ route('cobros.index') }}" variant="ghost" size="sm">Cobros</x-ui.button>
+                        <x-ui.button href="{{ route('cobros.index', ['status' => 'active']) }}" variant="ghost" size="sm">Cobros</x-ui.button>
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
@@ -477,23 +490,29 @@
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                        <x-ui.panel tone="info" class="space-y-1 rounded-[24px]">
-                            <div class="text-xs uppercase tracking-[0.18em] text-sky-900">Clientes creados</div>
-                            <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['clientsCreatedInPeriod'], 0, ',', '.') }}</div>
-                            <div class="text-sm text-slate-600">Dentro de {{ $periodLabel }}</div>
-                        </x-ui.panel>
+                        <a href="{{ route('clientes.index') }}" class="block transition hover:-translate-y-0.5">
+                            <x-ui.panel tone="info" class="space-y-1 rounded-[24px]">
+                                <div class="text-xs uppercase tracking-[0.18em] text-sky-900">Clientes creados</div>
+                                <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['clientsCreatedInPeriod'], 0, ',', '.') }}</div>
+                                <div class="text-sm text-slate-600">Dentro de {{ $periodLabel }}</div>
+                            </x-ui.panel>
+                        </a>
 
-                        <x-ui.panel tone="warning" class="space-y-1 rounded-[24px]">
-                            <div class="text-xs uppercase tracking-[0.18em] text-amber-900">Leads sin primer contacto</div>
-                            <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['newLeadsWithoutContact'], 0, ',', '.') }}</div>
-                            <div class="text-sm text-slate-600">Para reasignar o responder rapido</div>
-                        </x-ui.panel>
+                        <a href="{{ route('ventas.index', ['status' => 'new']) }}" class="block transition hover:-translate-y-0.5">
+                            <x-ui.panel tone="warning" class="space-y-1 rounded-[24px]">
+                                <div class="text-xs uppercase tracking-[0.18em] text-amber-900">Leads sin primer contacto</div>
+                                <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['newLeadsWithoutContact'], 0, ',', '.') }}</div>
+                                <div class="text-sm text-slate-600">Para reasignar o responder rapido</div>
+                            </x-ui.panel>
+                        </a>
 
-                        <x-ui.panel tone="danger" class="space-y-1 rounded-[24px]">
-                            <div class="text-xs uppercase tracking-[0.18em] text-rose-900">Cuotas por vencer</div>
-                            <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['upcomingInstallments'], 0, ',', '.') }}</div>
-                            <div class="text-sm text-slate-600">Siguientes 7 dias</div>
-                        </x-ui.panel>
+                        <a href="{{ route('cobros.index') }}" class="block transition hover:-translate-y-0.5">
+                            <x-ui.panel tone="danger" class="space-y-1 rounded-[24px]">
+                                <div class="text-xs uppercase tracking-[0.18em] text-rose-900">Cuotas por vencer</div>
+                                <div class="text-3xl font-semibold text-slate-950">{{ number_format($quickStats['upcomingInstallments'], 0, ',', '.') }}</div>
+                                <div class="text-sm text-slate-600">Siguientes 7 dias</div>
+                            </x-ui.panel>
+                        </a>
                     </div>
                 </x-ui.card>
             </div>
