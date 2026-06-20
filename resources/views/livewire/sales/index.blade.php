@@ -84,14 +84,15 @@
     <x-ui.card padding="none" class="overflow-hidden">
         <x-ui.table>
             <x-slot:head>
-                    <th class="px-4 py-3">Consulta</th>
-                    <th class="px-4 py-3">Contacto</th>
-                    <th class="px-4 py-3">Origen</th>
-                    <th class="px-4 py-3">Responsable</th>
-                    <th class="px-4 py-3">Primer contacto</th>
-                    <th class="px-4 py-3">Ultimo avance</th>
-                    <th class="px-4 py-3">Estado</th>
-                    <th class="px-4 py-3 text-right">Acciones</th>
+                    <th class="px-5 py-4">Consulta</th>
+                    <th class="px-5 py-4">Contacto</th>
+                    <th class="px-5 py-4">Origen</th>
+                    <th class="px-5 py-4">Responsable</th>
+                    <th class="px-5 py-4">Primer contacto</th>
+                    <th class="px-5 py-4">Ultimo avance</th>
+                    <th class="px-5 py-4">Propuesta</th>
+                    <th class="px-5 py-4">Estado</th>
+                    <th class="px-5 py-4 text-right">Acciones</th>
             </x-slot:head>
 
                 @forelse($opportunities as $opportunity)
@@ -100,50 +101,71 @@
                         $latestStatusLog = $opportunity->statusLogs->first();
                         $statusKey = $opportunity->status->value ?? null;
                     @endphp
-                    <tr class="hover:bg-slate-50/70">
-                        <td class="px-4 py-3">
+                    <tr class="align-top transition hover:bg-slate-50/80">
+                        <td class="px-5 py-5">
                             <div class="font-medium text-slate-900">{{ $opportunity->name }}</div>
-                            <div class="mt-1 text-xs text-slate-500">{{ $opportunity->client?->organization_name ?? 'Sin cliente asociado' }}</div>
+                            <div class="mt-2 text-xs text-slate-500">{{ $opportunity->client?->organization_name ?? 'Sin cliente asociado' }}</div>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-5 py-5">
                             <div>{{ $opportunity->display_contact }}</div>
-                            <div class="mt-1 text-xs text-slate-500">{{ $opportunity->contact_email ?: ($opportunity->contact_phone ?: 'Sin dato adicional') }}</div>
+                            <div class="mt-2 text-xs text-slate-500">{{ $opportunity->contact_email ?: ($opportunity->contact_phone ?: 'Sin dato adicional') }}</div>
                         </td>
-                        <td class="px-4 py-3">{{ $opportunity->source->label() }}</td>
-                        <td class="px-4 py-3">{{ $opportunity->responsibleUser?->name ?? 'Sin asignar' }}</td>
-                        <td class="px-4 py-3">{{ $opportunity->first_contact_at?->format('d/m/Y') ?? '—' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-5 py-5">{{ $opportunity->source->label() }}</td>
+                        <td class="px-5 py-5">{{ $opportunity->responsibleUser?->name ?? 'Sin asignar' }}</td>
+                        <td class="px-5 py-5">{{ $opportunity->first_contact_at?->format('d/m/Y') ?? '—' }}</td>
+                        <td class="px-5 py-5">
                             @if($latestNote)
                                 <div class="max-w-xs truncate text-slate-800">{{ $latestNote->content }}</div>
-                                <div class="mt-1 text-xs text-slate-500">
+                                <div class="mt-2 text-xs text-slate-500">
                                     {{ $latestNote->byUser?->name ?? 'Sistema' }} · {{ $latestNote->created_at?->format('d/m/Y H:i') }}
                                 </div>
                             @elseif($latestStatusLog)
                                 <div class="text-slate-800">Estado: {{ $latestStatusLog->status }}</div>
-                                <div class="mt-1 text-xs text-slate-500">{{ $latestStatusLog->created_at?->format('d/m/Y H:i') }}</div>
+                                <div class="mt-2 text-xs text-slate-500">{{ $latestStatusLog->created_at?->format('d/m/Y H:i') }}</div>
                             @else
                                 <span class="text-slate-500">Sin avances</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-5 py-5">
+                            @if($opportunity->estimated_ticket_amount || $opportunity->attachments_count > 0)
+                                <div class="space-y-2 text-xs text-slate-600">
+                                    <div class="rounded-xl bg-amber-50 px-3 py-2 text-amber-900">
+                                        <span class="font-semibold">Monto:</span>
+                                        {{ $opportunity->estimated_ticket_amount ? '$'.number_format((float) $opportunity->estimated_ticket_amount, 2, ',', '.') : 'Pendiente' }}
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-slate-700">Adjuntos:</span>
+                                        {{ $opportunity->attachments_count }}
+                                    </div>
+                                </div>
+                            @else
+                                <span class="text-slate-400">Sin propuesta cargada</span>
+                            @endif
+                        </td>
+                        <td class="px-5 py-5">
                             <x-ui.badge :variant="$statusBadgeVariants[$statusKey] ?? 'neutral'">
                                 {{ $opportunity->status->label() }}
                             </x-ui.badge>
                         </td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-5 py-5 text-right">
                             <div class="flex justify-end gap-2">
-                                <x-ui.button type="button" size="sm" variant="secondary" wire:click="openQuickNote({{ $opportunity->id }})">
-                                    Agregar nota
-                                </x-ui.button>
-                                <x-ui.button href="{{ route('ventas.show', $opportunity) }}" size="sm" variant="secondary">
-                                    Ver detalle
-                                </x-ui.button>
+                                <button type="button" wire:click="openQuickNote({{ $opportunity->id }})" title="Agregar nota comercial" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                </button>
+                                <a href="{{ route('ventas.show', $opportunity) }}" title="Ver detalle de la oportunidad" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" />
+                                    </svg>
+                                </a>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-8 text-center text-sm text-slate-500">
+                        <td colspan="9" class="px-4 py-8 text-center text-sm text-slate-500">
                             No hay oportunidades para mostrar.
                         </td>
                     </tr>
@@ -151,22 +173,25 @@
         </x-ui.table>
     </x-ui.card>
 
-    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div class="pt-1">
         {{ $opportunities->links() }}
     </div>
 
     @if($showCreateModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div class="w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
-                <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/45 p-3 sm:p-4">
+            <div class="flex min-h-full items-start justify-center">
+            <div class="my-4 flex w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70" style="max-height: calc(100vh - 2rem);">
+                <div class="shrink-0 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
+                    <div class="flex items-center justify-between gap-3">
                     <div>
                         <h3 class="text-lg font-semibold text-slate-950">Nueva oportunidad</h3>
                         <p class="text-sm text-slate-500">Primero registrá la consulta y después resolvé si se vincula o crea un cliente.</p>
                     </div>
                     <button type="button" wire:click="closeCreate" class="rounded-2xl px-3 py-2 text-slate-500 transition hover:bg-slate-100">Cerrar</button>
+                    </div>
                 </div>
 
-                <div class="border-b border-slate-200 px-6 py-4">
+                <div class="shrink-0 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
                     <div class="grid grid-cols-2 gap-3">
                         <button type="button" wire:click="goToCreateStep(1)"
                             class="rounded-xl border px-4 py-3 text-left {{ $createStep === 1 ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50' }}">
@@ -181,7 +206,7 @@
                     </div>
                 </div>
 
-                <div class="max-h-[80vh] overflow-y-auto p-6">
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
                     @if($createStep === 1)
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
@@ -228,15 +253,35 @@
                             </div>
 
                             <div class="md:col-span-2">
-                                <x-ui.label>Mensaje inicial</x-ui.label>
-                                <x-ui.textarea wire:model.defer="createForm.initial_message" rows="4"></x-ui.textarea>
-                                @error('createForm.initial_message') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="md:col-span-2">
                                 <x-ui.label>Notas comerciales</x-ui.label>
                                 <x-ui.textarea wire:model.defer="createForm.initial_note" rows="4"></x-ui.textarea>
                                 @error('createForm.initial_note') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <details class="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80">
+                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left">
+                                        <div>
+                                            <div class="text-sm font-semibold text-slate-900">Chat de origen</div>
+                                            <p class="mt-1 text-xs text-slate-500">Reservado para futuras integraciones de WhatsApp o chatbot. No se completa al crear una oportunidad manual.</p>
+                                        </div>
+                                        <span class="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Placeholder</span>
+                                    </summary>
+                                    <div class="border-t border-slate-200 bg-white px-4 py-4">
+                                        <div class="space-y-3">
+                                            <div class="flex justify-start">
+                                                <div class="max-w-xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm">
+                                                    Todavía no hay conversación importada desde un canal externo.
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-end">
+                                                <div class="max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
+                                                    Cuando se integre el bot, este espacio mostrará el contexto inicial del lead en formato chat.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     @endif
@@ -497,7 +542,8 @@
                     @endif
                 </div>
 
-                <div class="flex items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
+                <div class="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+                <div class="flex items-center justify-between gap-3">
                     <div>
                         @if($createStep === 2)
                             <x-ui.button type="button" variant="secondary" wire:click="previousCreateStep">Volver</x-ui.button>
@@ -512,6 +558,8 @@
                         @endif
                     </div>
                 </div>
+                </div>
+            </div>
             </div>
         </div>
     @endif

@@ -5,7 +5,8 @@ namespace App\Livewire\Developers;
 use App\Actions\Developers\DeleteDeveloperAction;
 use App\Models\Contact;
 use App\Models\Developer;
-use Illuminate\Support\Facades\Schema;
+use App\Models\JobPosition;
+use App\Models\TeamSkill;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -130,7 +131,7 @@ class DevelopersIndex extends Component
 
         session()->flash(
             'status',
-            "Developer eliminado de forma logica. Se conserva el historial de {$developer->projects_count} proyecto(s) asignado(s)."
+            "Integrante eliminado de forma logica. Se conserva el historial de {$developer->projects_count} proyecto(s) asignado(s)."
         );
 
         $this->resetPage();
@@ -157,9 +158,7 @@ class DevelopersIndex extends Component
             'birthdate' => $this->nullableTrim($this->birthdate),
         ];
 
-        if ($this->contactHasJobTitleColumn()) {
-            $contactData['job_title'] = $this->nullableTrim($this->puesto);
-        }
+        $contactData['job_title'] = $this->nullableTrim($this->puesto);
 
         $contact = $this->contactId
             ? Contact::query()->findOrFail($this->contactId)
@@ -169,9 +168,6 @@ class DevelopersIndex extends Component
         $contact->save();
 
         $notes = $this->nullableTrim($this->notes);
-        if (! $this->contactHasJobTitleColumn()) {
-            $notes = $this->mergePuestoInNotes($notes, $this->nullableTrim($this->puesto));
-        }
 
         $githubUrl = $this->nullableTrim($this->github_url);
         $githubUsername = $this->nullableTrim($this->github_username) ?: $this->extractGithubUsername($githubUrl);
@@ -321,7 +317,7 @@ class DevelopersIndex extends Component
         $this->email = (string) $developer->contact?->email;
         $this->phone = $developer->contact?->phone;
         $this->birthdate = optional($developer->contact?->birthdate)->format('Y-m-d');
-        $this->puesto = $this->contactHasJobTitleColumn() ? $developer->contact?->job_title : $this->extractPuestoFromNotes($developer->notes);
+        $this->puesto = $developer->contact?->job_title;
 
         $this->skills = $developer->skills ?? [];
         $this->skins = $developer->skins ?? [];
@@ -349,10 +345,10 @@ class DevelopersIndex extends Component
             'email' => ['required', 'email', 'max:255', Rule::unique('contacts', 'email')->ignore($this->contactId)],
             'phone' => ['nullable', 'string', 'max:50'],
             'birthdate' => ['nullable', 'date'],
-            'puesto' => ['nullable', 'string', 'max:255'],
+            'puesto' => ['nullable', 'string', 'max:255', Rule::in($this->jobPositionNamesForValidation())],
 
             'skills' => ['required', 'array', 'min:1'],
-            'skills.*' => ['required', 'string', Rule::in(config('developers.skills', []))],
+            'skills.*' => ['required', 'string', Rule::in($this->allowedSkillsForValidation())],
             'skins' => ['nullable', 'array'],
             'skins.*' => ['required', 'string'],
             'github_username' => ['nullable', 'string', 'max:255'],
@@ -411,11 +407,6 @@ class DevelopersIndex extends Component
         ];
     }
 
-    private function contactHasJobTitleColumn(): bool
-    {
-        return Schema::hasColumn('contacts', 'job_title');
-    }
-
     private function sanitizeArrayValues(array $values): array
     {
         return collect($values)
@@ -438,7 +429,22 @@ class DevelopersIndex extends Component
 
     private function allowedSkills(): array
     {
-        return collect(config('developers.skills', []))
+        return TeamSkill::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->map(fn (string $item) => $this->normalizeItem($item))
+            ->filter(fn (string $item) => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function allowedSkillsForValidation(): array
+    {
+        return TeamSkill::query()
+            ->orderBy('name')
+            ->pluck('name')
             ->map(fn (string $item) => $this->normalizeItem($item))
             ->filter(fn (string $item) => $item !== '')
             ->unique()
@@ -469,33 +475,16 @@ class DevelopersIndex extends Component
         return $segments[0] ?? null;
     }
 
-    private function mergePuestoInNotes(?string $notes, ?string $puesto): ?string
+    private function jobPositionNamesForValidation(): array
     {
-        $base = $notes ?? '';
-        $withoutOldPuesto = preg_replace('/^Puesto:\s.*(?:\R|$)/mi', '', $base) ?? $base;
-        $withoutOldPuesto = trim($withoutOldPuesto);
-
-        if ($puesto === null) {
-            return $withoutOldPuesto !== '' ? $withoutOldPuesto : null;
-        }
-
-        $lines = ["Puesto: {$puesto}"];
-        if ($withoutOldPuesto !== '') {
-            $lines[] = $withoutOldPuesto;
-        }
-
-        return implode(PHP_EOL, $lines);
-    }
-
-    private function extractPuestoFromNotes(?string $notes): ?string
-    {
-        if (! $notes) {
-            return null;
-        }
-
-        preg_match('/^Puesto:\s*(.+)$/mi', $notes, $matches);
-
-        return $matches[1] ?? null;
+        return JobPosition::query()
+            ->orderBy('name')
+            ->pluck('name')
+            ->map(fn (string $item) => $this->normalizeItem($item))
+            ->filter(fn (string $item) => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function availableDevelopersBySkill(): array
@@ -545,6 +534,7 @@ class DevelopersIndex extends Component
 
         return view('livewire.developers.index', [
             'developers' => $developers,
+            'jobPositions' => JobPosition::query()->orderByDesc('is_active')->orderBy('name')->get(),
             'total' => Developer::query()->count(),
             'activos' => Developer::query()->where('status', 'active')->count(),
             'fullTime' => Developer::query()->where('availability', 'full_time')->count(),

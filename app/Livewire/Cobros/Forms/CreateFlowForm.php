@@ -5,30 +5,47 @@ namespace App\Livewire\Cobros\Forms;
 use App\Actions\Cobros\CreatePaymentFlowAction;
 use App\Enums\Cobros\PaymentFlowStatus;
 use App\Enums\Cobros\PaymentFrequency;
-use App\Enums\ProjectStatus;
+use App\Enums\Sales\OpportunityStatus;
 use App\Models\Client;
 use App\Models\Project;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class CreateFlowForm extends Component
 {
+    use WithPagination;
+
     public int $currentStep = 1;
 
+    public string $operationSearch = '';
+
     public ?int $client_id = null;
+
     public ?int $project_id = null;
 
+    public string $operation_amount = '0.00';
+
+    public string $interest_amount = '0.00';
+
     public string $total_amount = '0.00';
+
     public string $installments_count = '1';
+
     public string $frequency = 'monthly';
+
     public string $start_date = '';
+
     public string $grace_days = '0';
+
     public ?string $notes = null;
+
     public string $status = 'active';
 
     public bool $auto_send_enabled = false;
+
     public array $installmentRows = [];
 
     public function mount(): void
@@ -39,22 +56,22 @@ class CreateFlowForm extends Component
         $this->regenerateInstallments();
     }
 
-    public function updatedClientId($value): void
+    public function updatingOperationSearch(): void
     {
-        $this->client_id = $value !== null && $value !== '' ? (int) $value : null;
-        $this->project_id = null;
-        $this->total_amount = '0.00';
-        $this->installments_count = '1';
-        $this->notes = null;
-        $this->auto_send_enabled = false;
-        $this->resetValidation();
-        $this->regenerateInstallments();
+        $this->resetPage('operationsPage');
+        $this->resetSelectedOperation();
     }
 
     public function updatedInstallmentsCount($value): void
     {
         $count = max(1, min(240, (int) $value));
         $this->installments_count = (string) $count;
+        $this->regenerateInstallments();
+    }
+
+    public function updatedInterestAmount(): void
+    {
+        $this->syncTotalAmountFromOperation();
         $this->regenerateInstallments();
     }
 
@@ -75,13 +92,16 @@ class CreateFlowForm extends Component
 
     public function selectProject(int $projectId): void
     {
-        $project = $this->clientProjects->firstWhere('id', $projectId);
+        $project = $this->eligibleOperationsQuery()
+            ->with(['client.contact', 'paymentFlows', 'opportunity.statusLogs'])
+            ->find($projectId);
 
-        if (! $project || $this->projectDisabledReason($project) !== null) {
+        if (! $project || $project->paymentFlows->isNotEmpty()) {
             return;
         }
 
         $this->project_id = $project->id;
+        $this->client_id = $project->client_id;
         $this->hydrateFromProject($project);
         $this->resetValidation();
     }
@@ -127,7 +147,7 @@ class CreateFlowForm extends Component
 
         if (! $project) {
             throw ValidationException::withMessages([
-                'project_id' => 'Debés seleccionar un proyecto válido.',
+                'project_id' => 'Debés seleccionar una operación válida.',
             ]);
         }
 
@@ -150,7 +170,7 @@ class CreateFlowForm extends Component
                     ])
                     ->all(),
             ],
-            auth()->user()
+            Auth::user()
         );
 
         session()->flash('success', 'Flujo de cobro creado correctamente.');
@@ -176,22 +196,22 @@ class CreateFlowForm extends Component
         if ($step === 1) {
             $project = $this->selectedProject;
 
-            if (! $project || $this->projectDisabledReason($project) !== null) {
+            if (! $project || $project->paymentFlows->isNotEmpty()) {
                 throw ValidationException::withMessages([
-                    'project_id' => 'Seleccioná un proyecto habilitado para crear el flujo.',
+                    'project_id' => 'Seleccioná una operación sin flujo asociado.',
                 ]);
             }
         }
 
         if ($step === 2) {
-            $this->ensureInstallmentSumMatchesProjectTotal($validated);
+            $this->ensureTotalMatchesOperationAndInterest($validated);
+            $this->ensureInstallmentSumMatchesFlowTotal($validated);
         }
     }
 
     protected function stepOneRules(): array
     {
         return [
-            'client_id' => ['required', 'exists:clients,id'],
             'project_id' => ['required', 'exists:projects,id'],
         ];
     }
@@ -202,6 +222,8 @@ class CreateFlowForm extends Component
 
         return [
             'project_id' => ['required', 'exists:projects,id'],
+            'operation_amount' => ['required', 'numeric', 'gt:0'],
+            'interest_amount' => ['required', 'numeric', 'min:0'],
             'total_amount' => ['required', 'numeric', 'gt:0'],
             'installments_count' => ['required', 'integer', 'min:1', 'max:240'],
             'frequency' => ['required', 'in:weekly,biweekly,monthly'],
@@ -226,10 +248,13 @@ class CreateFlowForm extends Component
     protected function messages(): array
     {
         return [
-            'client_id.required' => 'Debés seleccionar un cliente.',
-            'project_id.required' => 'Debés seleccionar un proyecto.',
-            'project_id.exists' => 'El proyecto seleccionado no es válido.',
-            'total_amount.required' => 'No se encontró un monto total válido para el proyecto.',
+            'project_id.required' => 'Debés seleccionar una operación.',
+            'project_id.exists' => 'La operación seleccionada no es válida.',
+            'operation_amount.required' => 'No se encontró un monto válido para la operación.',
+            'operation_amount.gt' => 'El monto de la operación debe ser mayor a cero.',
+            'interest_amount.required' => 'El interés es obligatorio. Usá 0 si no corresponde.',
+            'interest_amount.min' => 'El interés no puede ser negativo.',
+            'total_amount.required' => 'No se encontró un monto total válido para el flujo.',
             'total_amount.gt' => 'El monto total del flujo debe ser mayor a cero.',
             'installments_count.required' => 'La cantidad de cuotas es obligatoria.',
             'installments_count.integer' => 'La cantidad de cuotas debe ser un número entero.',
@@ -245,14 +270,26 @@ class CreateFlowForm extends Component
         ];
     }
 
-    protected function ensureInstallmentSumMatchesProjectTotal(array $validated): void
+    protected function ensureTotalMatchesOperationAndInterest(array $validated): void
+    {
+        $expected = round((float) $validated['operation_amount'] + (float) $validated['interest_amount'], 2);
+        $total = round((float) $validated['total_amount'], 2);
+
+        if (abs($expected - $total) > 0.009) {
+            throw ValidationException::withMessages([
+                'total_amount' => 'El total del flujo debe coincidir con el monto de la operación más el interés.',
+            ]);
+        }
+    }
+
+    protected function ensureInstallmentSumMatchesFlowTotal(array $validated): void
     {
         $sum = round(collect($validated['installmentRows'])->sum(fn ($row) => (float) $row['amount']), 2);
         $total = round((float) $validated['total_amount'], 2);
 
         if (abs($sum - $total) > 0.009) {
             throw ValidationException::withMessages([
-                'installmentRows' => 'La suma de las cuotas debe coincidir exactamente con el monto total del proyecto.',
+                'installmentRows' => 'La suma de las cuotas debe coincidir exactamente con el monto total del flujo.',
             ]);
         }
     }
@@ -261,10 +298,32 @@ class CreateFlowForm extends Component
     {
         $amount = round((float) ($project->total_cost ?? 0), 2);
 
-        $this->total_amount = number_format($amount, 2, '.', '');
+        $this->operation_amount = number_format($amount, 2, '.', '');
+        $this->syncTotalAmountFromOperation();
         $this->notes ??= $project->prospection_notes;
         $this->installments_count = $this->installments_count !== '' ? $this->installments_count : '1';
         $this->regenerateInstallments();
+    }
+
+    protected function resetSelectedOperation(): void
+    {
+        $this->client_id = null;
+        $this->project_id = null;
+        $this->operation_amount = '0.00';
+        $this->interest_amount = '0.00';
+        $this->total_amount = '0.00';
+        $this->installments_count = '1';
+        $this->notes = null;
+        $this->auto_send_enabled = false;
+        $this->resetValidation();
+        $this->regenerateInstallments();
+    }
+
+    protected function syncTotalAmountFromOperation(): void
+    {
+        $total = round((float) $this->operation_amount + max(0, (float) $this->interest_amount), 2);
+
+        $this->total_amount = number_format($total, 2, '.', '');
     }
 
     protected function regenerateInstallments(bool $preserveAmounts = false): void
@@ -291,6 +350,7 @@ class CreateFlowForm extends Component
     {
         if (empty($this->installmentRows)) {
             $this->regenerateInstallments();
+
             return;
         }
 
@@ -335,15 +395,8 @@ class CreateFlowForm extends Component
 
     public function projectDisabledReason(Project $project): ?string
     {
-        $hasOpenFlow = $project->paymentFlows
-            ->contains(fn ($flow) => in_array($flow->status->value, [PaymentFlowStatus::Draft->value, PaymentFlowStatus::Active->value], true));
-
-        if ($hasOpenFlow) {
-            return 'Flujo creado';
-        }
-
-        if ($project->status !== ProjectStatus::SaleClosed) {
-            return 'Estado no permitido';
+        if ($project->paymentFlows->isNotEmpty()) {
+            return 'Flujo ya asociado';
         }
 
         if ((float) ($project->total_cost ?? 0) <= 0) {
@@ -353,26 +406,14 @@ class CreateFlowForm extends Component
         return null;
     }
 
-    public function getClientsProperty(): Collection
+    public function getOperationsProperty()
     {
-        return Client::query()
-            ->with('contact')
-            ->withCount('projects')
-            ->orderBy('organization_name')
-            ->get();
-    }
-
-    public function getClientProjectsProperty(): Collection
-    {
-        if (! $this->client_id) {
-            return collect();
-        }
-
-        return Project::query()
-            ->with(['paymentFlows', 'client.contact'])
-            ->where('client_id', $this->client_id)
+        return $this->eligibleOperationsQuery()
+            ->with(['client.contact', 'paymentFlows', 'opportunity.statusLogs'])
+            ->orderByRaw("case status when 'execution' then 0 when 'sale_closed' then 1 when 'paused' then 2 else 3 end")
             ->orderBy('name')
-            ->get();
+            ->paginate(10, ['*'], 'operationsPage')
+            ->through(fn (Project $project) => $this->decorateProjectForFlowCreation($project));
     }
 
     public function getSelectedProjectProperty(): ?Project
@@ -388,11 +429,7 @@ class CreateFlowForm extends Component
 
     public function getSelectedClientProperty(): ?Client
     {
-        if (! $this->client_id) {
-            return null;
-        }
-
-        return $this->clients->firstWhere('id', $this->client_id);
+        return $this->selectedProject?->client;
     }
 
     public function getInstallmentsSumProperty(): float
@@ -418,6 +455,54 @@ class CreateFlowForm extends Component
         return 'border-slate-200 bg-slate-50 text-slate-700';
     }
 
+    protected function eligibleOperationsQuery()
+    {
+        $search = trim($this->operationSearch);
+
+        return $this->eligibleProjectsQuery(Project::query())
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($innerQuery) use ($search) {
+                    $innerQuery
+                        ->where('projects.id', 'like', "%{$search}%")
+                        ->orWhere('projects.name', 'like', "%{$search}%")
+                        ->orWhereHas('client', function ($clientQuery) use ($search) {
+                            $clientQuery
+                                ->where('organization_name', 'like', "%{$search}%")
+                                ->orWhereHas('contact', function ($contactQuery) use ($search) {
+                                    $contactQuery
+                                        ->where('first_name', 'like', "%{$search}%")
+                                        ->orWhere('last_name', 'like', "%{$search}%")
+                                        ->orWhere('email', 'like', "%{$search}%");
+                                });
+                        })
+                        ->orWhereHas('opportunity', function ($opportunityQuery) use ($search) {
+                            $opportunityQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('contact_name', 'like', "%{$search}%")
+                                ->orWhere('contact_email', 'like', "%{$search}%")
+                                ->orWhere('contact_phone', 'like', "%{$search}%");
+                        });
+                });
+            });
+    }
+
+    protected function eligibleProjectsQuery($query)
+    {
+        return $query
+            ->whereDoesntHave('paymentFlows');
+    }
+
+    protected function decorateProjectForFlowCreation(Project $project): Project
+    {
+        $wonLog = $project->opportunity?->statusLogs
+            ->firstWhere('status', OpportunityStatus::Won->value);
+        $wonAt = $wonLog?->created_at ?? $project->created_at;
+
+        $project->setAttribute('won_date_label', $wonAt?->format('d/m/Y') ?? 'Sin fecha');
+
+        return $project;
+    }
+
     public function getAutoSendEmailProperty(): ?string
     {
         return $this->selectedProject?->client?->contact?->email;
@@ -426,8 +511,7 @@ class CreateFlowForm extends Component
     public function render()
     {
         return view('livewire.cobros.forms.create-flow-form', [
-            'clients' => $this->clients,
-            'clientProjects' => $this->clientProjects,
+            'operations' => $this->operations,
             'selectedClient' => $this->selectedClient,
             'selectedProject' => $this->selectedProject,
             'frequencies' => PaymentFrequency::cases(),

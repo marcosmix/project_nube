@@ -14,8 +14,8 @@ return new class extends Migration {
 
             $table->string('name');
 
-            // status: prospection | interested | sale_closed | execution | paused | finished
-            $table->string('status')->default('prospection');
+            // status: sale_closed | execution | paused | finished
+            $table->string('status')->default('sale_closed');
 
             // execution_sub_status: on_track | with_debt | delayed
             $table->string('execution_sub_status')->nullable();

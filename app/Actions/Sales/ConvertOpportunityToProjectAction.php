@@ -34,7 +34,7 @@ class ConvertOpportunityToProjectAction
                 'prospection_notes' => $this->buildInitialProjectNotes($opportunity),
                 'proposal_url' => null,
                 'excel_url' => null,
-                'total_cost' => null,
+                'total_cost' => $opportunity->estimated_ticket_amount,
                 'estimated_start_date' => null,
                 'estimated_end_date' => null,
                 'sprint_close_day' => null,
@@ -87,6 +87,7 @@ class ConvertOpportunityToProjectAction
     {
         $parts = array_filter([
             $opportunity->initial_message ? 'Mensaje inicial: '.$opportunity->initial_message : null,
+            $opportunity->estimated_ticket_amount ? 'Monto estimado comercial: $'.number_format((float) $opportunity->estimated_ticket_amount, 2, ',', '.') : null,
             $opportunity->contact_name ? 'Contacto: '.$opportunity->contact_name : null,
             $opportunity->contact_phone ? 'Telefono: '.$opportunity->contact_phone : null,
             $opportunity->contact_email ? 'Email: '.$opportunity->contact_email : null,

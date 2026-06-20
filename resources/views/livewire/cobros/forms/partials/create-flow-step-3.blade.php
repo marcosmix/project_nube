@@ -1,12 +1,13 @@
-<div class="space-y-8">
-    <div>
-        <h2 class="text-xl font-semibold text-slate-950">Paso 3. Envío automático de cobros</h2>
+<div class="flex h-full min-h-0 flex-col gap-6">
+    <div class="shrink-0">
+        <h2 class="text-xl font-semibold text-slate-950">Paso 3. Automatizaciones</h2>
         <p class="mt-2 text-sm text-slate-600">
             Definí si el flujo debe quedar listo para automatizar el envío de comunicaciones de cobro.
         </p>
     </div>
 
-    <div class="max-w-3xl space-y-5">
+    <div class="min-h-0 flex-1 overflow-y-auto">
+        <div class="max-w-3xl space-y-5 pr-1">
         <label class="flex cursor-pointer items-start gap-4 rounded-2xl border p-5 shadow-sm transition {{ $auto_send_enabled ? 'border-blue-300 bg-blue-50/80' : 'border-slate-300 bg-white hover:border-blue-300 hover:bg-blue-50/40' }}">
             <input
                 type="checkbox"
@@ -27,7 +28,7 @@
                 {{ $this->autoSendEmail ?: 'No hay correo registrado' }}
             </div>
             <p class="mt-2 text-sm text-slate-600">
-                El email se toma desde el contacto principal del cliente asociado al proyecto.
+                El email se toma desde el contacto principal del cliente asociado a la operación.
             </p>
         </div>
 
@@ -42,5 +43,6 @@
                 El flujo quedará listo para usar el email {{ $this->autoSendEmail }} cuando se implemente el proceso de envío automático.
             </div>
         @endif
+        </div>
     </div>
 </div>

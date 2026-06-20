@@ -34,4 +34,14 @@ enum OpportunityStatus: string
             self::cases(),
         );
     }
+
+    public function supportsCommercialProposalData(): bool
+    {
+        return in_array($this, [
+            self::Qualified,
+            self::ProposalSent,
+            self::Negotiation,
+            self::Won,
+        ], true);
+    }
 }

@@ -10,33 +10,33 @@
             <div class="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div class="space-y-1">
-                        <p class="font-semibold">Eliminar proyecto: {{ $pendingDeleteProjectName }}</p>
+                        <p class="font-semibold">Eliminar operación: {{ $pendingDeleteProjectName }}</p>
                         <p>
                             Tiene {{ $pendingDeleteProjectFlows }} flujo(s) de cobro asociados
                             @if($pendingDeleteProjectOpenFlows > 0)
                                 y {{ $pendingDeleteProjectOpenFlows }} sigue(n) abierto(s)
                             @endif.
-                            Puedes archivar solo el proyecto o archivar tambien sus cobros.
+                            Puedes archivar solo la operación o archivar tambien sus cobros.
                         </p>
                     </div>
 
                     <div class="flex flex-col gap-2 sm:flex-row">
                         <x-ui.button type="button" variant="secondary" wire:click="cancelDelete">Cancelar</x-ui.button>
-                        <x-ui.button type="button" variant="secondary" wire:click="deleteKeepingFlows">Solo proyecto</x-ui.button>
-                        <x-ui.button type="button" variant="danger" wire:click="deleteWithFlows">Proyecto y cobros</x-ui.button>
+                        <x-ui.button type="button" variant="secondary" wire:click="deleteKeepingFlows">Solo operación</x-ui.button>
+                        <x-ui.button type="button" variant="danger" wire:click="deleteWithFlows">Operación y cobros</x-ui.button>
                     </div>
                 </div>
             </div>
         @endif
 
         <x-ui.section-header
-            title="Proyectos"
-            description="Monitorea estado, riesgo y valor del portafolio sin salir del flujo operativo."
+            title="Operaciones"
+            description="Monitorea estado, riesgo y valor del portafolio operativo sin salir del flujo comercial y de entrega."
             eyebrow="Operacion"
         >
             <x-slot:actions>
                 <x-ui.button type="button" wire:click="openCreate">
-                    Nuevo proyecto
+                    Pasar venta a Operaciones
                 </x-ui.button>
             </x-slot:actions>
         </x-ui.section-header>
@@ -51,16 +51,16 @@
             $avg = $all > 0 ? round($totalRevenue / $all) : 0;
         @endphp
 
-        <x-ui.stat-card label="Proyectos totales" :value="number_format($all, 0, ',', '.')" :hint="number_format($execution, 0, ',', '.').' en ejecucion'" tone="primary" />
+        <x-ui.stat-card label="Operaciones totales" :value="number_format($all, 0, ',', '.')" :hint="number_format($execution, 0, ',', '.').' en ejecucion'" tone="primary" />
         <x-ui.stat-card label="Finalizados" :value="number_format($finished, 0, ',', '.')" :hint="($all > 0 ? round(($finished / $all) * 100) : 0).'% tasa de cierre'" tone="success" />
-        <x-ui.stat-card label="Con problemas" :value="number_format($issues, 0, ',', '.')" hint="Proyectos con deuda o demora." tone="danger" />
+        <x-ui.stat-card label="Con problemas" :value="number_format($issues, 0, ',', '.')" hint="Operaciones con deuda o demora." tone="danger" />
         <x-ui.stat-card label="Valor promedio" :value="'$'.number_format($avg, 0, ',', '.')" :hint="'Total: $'.number_format($totalRevenue, 0, ',', '.')" tone="accent" />
     </div>
 
     <x-ui.card class="space-y-5 bg-slate-50/70">
         <div>
             <h2 class="text-lg font-semibold text-slate-950">Vista de portafolio</h2>
-            <p class="text-sm text-slate-500">Filtra por estado y detecta rapido proyectos activos, pausados o con riesgo.</p>
+            <p class="text-sm text-slate-500">Filtra por estado y detecta rapido operaciones activas, frenadas o con riesgo.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -72,9 +72,7 @@
 
             <x-ui.select wire:model.live="statusFilter">
                 <option value="all">Todos los estados</option>
-                <option value="prospection">En Prospección</option>
-                <option value="interested">Interesado</option>
-                <option value="sale_closed">Venta Cerrada</option>
+                <option value="sale_closed">Listo para ejecutar</option>
                 <option value="execution">En Ejecución</option>
                 <option value="paused">Frenado</option>
                 <option value="finished">Finalizado</option>
@@ -195,193 +193,181 @@
 
                     @if($status === 'paused')
                         <div class="mt-4 rounded-2xl bg-purple-50 p-3 text-xs text-purple-800 ring-1 ring-purple-200">
-                            Proyecto pausado temporalmente
+                            Operación frenada temporalmente
                         </div>
                     @endif
                 </div>
             </div>
         @empty
             <div class="lg:col-span-2">
-                <x-ui.empty-state title="No se encontraron proyectos" description="Prueba con otro estado o una busqueda mas amplia para recuperar resultados." />
+                <x-ui.empty-state title="No se encontraron operaciones" description="Prueba con otro estado o una busqueda mas amplia para recuperar resultados." />
             </div>
         @endforelse
     </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div class="pt-1">
             {{ $projects->links() }}
         </div>
 
-        {{-- Modal Create (simple) --}}
+        {{-- Modal Venta Ganada -> Operaciones --}}
         @if($showCreateModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div class="w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
-                <div class="flex items-center justify-between border-b border-slate-200 p-5">
-                    <div>
-                        <h3 class="text-xl font-semibold text-slate-950">Nuevo proyecto</h3>
-                        <p class="text-sm text-slate-500">Completa la información base y prepara el proyecto para su ciclo operativo.</p>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+                <div class="flex w-full max-w-4xl max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-200/70">
+                    <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-950">Pasar venta a Operaciones</h3>
+                            <p class="mt-1 text-sm text-slate-500">Seleccioná una venta ganada pendiente y confirmá el traspaso en el siguiente paso.</p>
+                        </div>
+                        <button type="button" wire:click="closeCreate" class="rounded-2xl px-3 py-2 text-slate-500 transition hover:bg-slate-100">✕</button>
                     </div>
-                    <button wire:click="closeCreate" class="rounded-2xl px-3 py-2 text-slate-500 transition hover:bg-slate-100">✕</button>
-                </div>
 
-                <div class="max-h-[80vh] overflow-y-auto p-6">
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div class="md:col-span-2">
-                            <x-ui.label>Nombre del proyecto *</x-ui.label>
-                            <x-ui.input wire:model.defer="form.name" />
-                            @error('form.name') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <label class="text-sm text-gray-600">Estado *</label>
-                            <input type="hidden" wire:model="form.status" value="prospection" />
-                            <div class="mt-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-                                En Prospección (estado inicial automático)
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $createStep === 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700' }} text-sm font-semibold">1</div>
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-900">Seleccionar venta</div>
+                                    <div class="text-xs text-slate-500">Elegí una venta ganada pendiente</div>
+                                </div>
                             </div>
-                            @error('form.status') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <x-ui.label>Cliente *</x-ui.label>
-                            <x-ui.select wire:model.defer="form.client_id">
-                                <option value="">Selecciona un cliente</option>
-                                @foreach($this->clients as $c)
-                                    <option value="{{ $c->id }}">
-                                        {{ $c->organization_name }} - {{ $c->contact->first_name }} {{ $c->contact->last_name }}
-                                    </option>
-                                @endforeach
-                            </x-ui.select>
-                            @error('form.client_id') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                        </div>
-
-                        {{-- Subestado execution --}}
-                        @if(($form['status'] ?? null) === 'execution')
-                            <div class="md:col-span-2">
-                                <x-ui.label>Sub-estado de ejecución</x-ui.label>
-                                <x-ui.select wire:model.defer="form.execution_sub_status">
-                                    <option value="">—</option>
-                                    <option value="on_track">Al Día</option>
-                                    <option value="with_debt">Con Deuda</option>
-                                    <option value="delayed">Con Demora</option>
-                                </x-ui.select>
-                                @error('form.execution_sub_status') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                            <div class="h-px flex-1 bg-slate-200"></div>
+                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full {{ $createStep === 2 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600' }} text-sm font-semibold">2</div>
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-900">Confirmar</div>
+                                    <div class="text-xs text-slate-500">Revisá los datos antes de pasarla</div>
+                                </div>
                             </div>
-                        @endif
-
-                        {{-- Notas --}}
-                        <div class="md:col-span-2">
-                            <x-ui.label>Notas</x-ui.label>
-                            <x-ui.textarea wire:model.defer="form.prospection_notes" rows="4"></x-ui.textarea>
-                            @error('form.prospection_notes') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
-                    {{-- Contratación desde interested --}}
-                    @if(($form['status'] ?? 'prospection') !== 'prospection')
-                        <x-ui.panel class="mt-6">
-                            <div class="mb-4 text-lg font-semibold text-slate-950">Información de contratación</div>
+                    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                        @if($createStep === 1)
+                            <div class="space-y-4">
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                                    <x-ui.label>Buscar venta ganada</x-ui.label>
+                                    <x-ui.input wire:model.live.debounce.300ms="opportunitySearch" placeholder="Nombre de la venta, cliente, contacto o email" />
+                                    <p class="mt-1 text-xs text-slate-500">Se muestran todas las ventas ganadas que todavía no fueron pasadas a Operaciones.</p>
+                                </div>
 
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <x-ui.field-group label="Costo total">
-                                    <x-ui.input type="number" wire:model.defer="form.total_cost" />
-                                    @error('form.total_cost') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-
-                                <x-ui.field-group label="Inicio estimado">
-                                    <x-ui.input type="date" wire:model.defer="form.estimated_start_date" />
-                                    @error('form.estimated_start_date') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-
-                                <x-ui.field-group label="Fin estimado">
-                                    <x-ui.input type="date" wire:model.defer="form.estimated_end_date" />
-                                    @error('form.estimated_end_date') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-
-                                <x-ui.field-group class="md:col-span-2" label="Link propuesta (PDF)">
-                                    <x-ui.input wire:model.defer="form.proposal_url" />
-                                    @error('form.proposal_url') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-
-                                <x-ui.field-group class="md:col-span-2" label="Link Excel (anexo)">
-                                    <x-ui.input wire:model.defer="form.excel_url" />
-                                    @error('form.excel_url') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-                            </div>
-                        </x-ui.panel>
-                    @endif
-
-                    {{-- Equipo desde venta cerrada --}}
-                    @if(in_array(($form['status'] ?? 'prospection'), ['sale_closed','execution','paused','finished'], true))
-                        <x-ui.panel class="mt-6">
-                            <div class="mb-4 text-lg font-semibold text-slate-950">Asignación de equipo</div>
-
-                            <div class="grid max-h-64 grid-cols-1 gap-3 overflow-y-auto p-1 md:grid-cols-2">
-                                @foreach($this->developers as $d)
-                                    @php
-                                        $checked = in_array($d->id, $selectedDevelopers, true);
-                                    @endphp
-                                    <x-ui.radio-card :checked="$checked" class="flex items-center gap-3 border-2 p-3">
-                                        <input
-                                            type="checkbox"
-                                            wire:model.defer="selectedDevelopers"
-                                            value="{{ $d->id }}"
-                                            class="rounded"
-                                        />
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <div class="mb-4 flex items-center justify-between gap-3">
                                         <div>
-                                            <div class="text-sm text-slate-900">
-                                                {{ $d->contact->first_name }} {{ $d->contact->last_name }}
+                                            <div class="text-sm font-semibold text-slate-900">Ventas ganadas pendientes</div>
+                                            <div class="text-xs text-slate-500">Elegí una venta para continuar al paso de confirmación.</div>
+                                        </div>
+                                        <x-ui.badge variant="info">{{ $this->wonOpportunities->total() }} disponibles</x-ui.badge>
+                                    </div>
+
+                                    <div class="max-h-[38vh] space-y-3 overflow-y-auto pr-1">
+                                        @forelse($this->wonOpportunities as $opportunity)
+                                            @php
+                                                $selected = $selectedWonOpportunityId === $opportunity->id;
+                                            @endphp
+
+                                            <button
+                                                type="button"
+                                                wire:key="won-opportunity-{{ $opportunity->id }}"
+                                                wire:click="selectWonOpportunity({{ $opportunity->id }})"
+                                                class="w-full rounded-2xl border p-4 text-left shadow-sm transition {{ $selected ? 'border-indigo-300 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white' }}"
+                                            >
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <div class="text-sm font-semibold text-slate-950">{{ $opportunity->name }}</div>
+                                                        <div class="mt-1 text-xs text-slate-500">{{ $opportunity->client?->organization_name ?? 'Sin cliente' }} · {{ $opportunity->display_contact }}</div>
+                                                    </div>
+                                                    <x-ui.badge size="sm" variant="success">Ganada</x-ui.badge>
+                                                </div>
+
+                                                <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                                                    <span class="rounded-full bg-white px-2.5 py-1 ring-1 ring-slate-200">Monto: {{ $opportunity->estimated_ticket_amount ? '$'.number_format((float) $opportunity->estimated_ticket_amount, 2, ',', '.') : 'Pendiente' }}</span>
+                                                    <span class="rounded-full bg-white px-2.5 py-1 ring-1 ring-slate-200">{{ $opportunity->notes_count }} nota{{ $opportunity->notes_count === 1 ? '' : 's' }}</span>
+                                                    <span class="rounded-full bg-white px-2.5 py-1 ring-1 ring-slate-200">{{ $opportunity->attachments_count }} adjunto{{ $opportunity->attachments_count === 1 ? '' : 's' }}</span>
+                                                </div>
+                                            </button>
+                                        @empty
+                                            <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                                                No hay ventas ganadas pendientes para convertir.
                                             </div>
-                                            <div class="text-xs text-slate-500">
-                                                {{ $d->level }}
+                                        @endforelse
+                                    </div>
+
+                                    <div class="mt-5">
+                                        {{ $this->wonOpportunities->links() }}
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div class="text-sm font-semibold text-slate-900">Resumen previo</div>
+                                <p class="mt-1 text-sm text-slate-500">Revisá los datos de la venta antes de generar la operación.</p>
+
+                                @if($this->selectedWonOpportunity)
+                                    <div class="mt-4 space-y-4">
+                                        <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                                            <div class="text-xs uppercase tracking-wide text-slate-500">Venta</div>
+                                            <div class="mt-1 text-lg font-semibold text-slate-950">{{ $this->selectedWonOpportunity->name }}</div>
+                                            <div class="mt-1 text-sm text-slate-600">{{ $this->selectedWonOpportunity->source->label() }}</div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-3 text-sm text-slate-700 sm:grid-cols-2">
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div class="text-xs uppercase tracking-wide text-slate-500">Cliente</div>
+                                                <div class="mt-1 font-medium text-slate-950">{{ $this->selectedWonOpportunity->client?->organization_name ?? 'Sin cliente' }}</div>
+                                            </div>
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div class="text-xs uppercase tracking-wide text-slate-500">Contacto</div>
+                                                <div class="mt-1 font-medium text-slate-950">{{ $this->selectedWonOpportunity->display_contact }}</div>
+                                            </div>
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div class="text-xs uppercase tracking-wide text-slate-500">Monto estimado</div>
+                                                <div class="mt-1 font-medium text-slate-950">{{ $this->selectedWonOpportunity->estimated_ticket_amount ? '$'.number_format((float) $this->selectedWonOpportunity->estimated_ticket_amount, 2, ',', '.') : 'Pendiente' }}</div>
+                                            </div>
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div class="text-xs uppercase tracking-wide text-slate-500">Contenido</div>
+                                                <div class="mt-1 font-medium text-slate-950">{{ $this->selectedWonOpportunity->notes_count }} nota{{ $this->selectedWonOpportunity->notes_count === 1 ? '' : 's' }} y {{ $this->selectedWonOpportunity->attachments_count }} adjunto{{ $this->selectedWonOpportunity->attachments_count === 1 ? '' : 's' }}</div>
                                             </div>
                                         </div>
-                                    </x-ui.radio-card>
-                                @endforeach
+
+                                        @if($this->selectedWonOpportunity->notes->isNotEmpty())
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div class="text-xs uppercase tracking-wide text-slate-500">Última nota</div>
+                                                <div class="mt-2 whitespace-pre-wrap text-sm text-slate-700">{{ $this->selectedWonOpportunity->notes->last()->content }}</div>
+                                            </div>
+                                        @endif
+
+                                        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                            Al confirmar, se creará la operación en Operaciones copiando el cliente, el monto y el contexto comercial de esta venta ganada.
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
+                        @endif
+                    </div>
 
-                            @error('selectedDevelopers') <div class="mt-2 text-xs text-red-600">{{ $message }}</div> @enderror
-                            @error('selectedDevelopers.*') <div class="mt-2 text-xs text-red-600">{{ $message }}</div> @enderror
+                    <div class="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            @error('selectedWonOpportunityId') <div class="text-xs text-red-600">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                            <x-ui.button type="button" variant="secondary" wire:click="closeCreate">Cancelar</x-ui.button>
 
-                            <div class="mt-2 text-sm text-slate-600">
-                                {{ count($selectedDevelopers) }} developer(s) seleccionado(s)
-                            </div>
-                        </x-ui.panel>
-                    @endif
-
-                    {{-- Ejecución --}}
-                    @if(in_array(($form['status'] ?? 'prospection'), ['execution','paused','finished'], true))
-                        <x-ui.panel class="mt-6">
-                            <div class="mb-4 text-lg font-semibold text-slate-950">Información de ejecución</div>
-
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <x-ui.field-group label="Día cierre sprint (1-31)">
-                                    <x-ui.input type="number" min="1" max="31" wire:model.defer="form.sprint_close_day" />
-                                    @error('form.sprint_close_day') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-
-                                <x-ui.field-group label="Fecha real inicio">
-                                    <x-ui.input type="date" wire:model.defer="form.actual_start_date" />
-                                    @error('form.actual_start_date') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                                </x-ui.field-group>
-                            </div>
-                        </x-ui.panel>
-                    @endif
-
-                    {{-- Pausa --}}
-                    @if(($form['status'] ?? null) === 'paused')
-                        <x-ui.panel class="mt-6" tone="purple">
-                            <div class="mb-2 text-lg font-semibold text-purple-900">Motivo de Pausa</div>
-                            <x-ui.textarea wire:model.defer="form.pause_reason" rows="3" class="border-purple-200 bg-white"></x-ui.textarea>
-                            @error('form.pause_reason') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
-                        </x-ui.panel>
-                    @endif
-                </div>
-
-                <div class="flex justify-end gap-3 border-t border-slate-200 p-5">
-                    <x-ui.button type="button" variant="secondary" wire:click="closeCreate">Cancelar</x-ui.button>
-                    <x-ui.button type="button" wire:click="create">Crear proyecto</x-ui.button>
+                            @if($createStep === 1)
+                                <x-ui.button type="button" wire:click="goToCreateReview" :disabled="! $selectedWonOpportunityId">
+                                    Ver resumen
+                                </x-ui.button>
+                            @else
+                                <x-ui.button type="button" variant="secondary" wire:click="backToCreateSelection">
+                                    Volver
+                                </x-ui.button>
+                                <x-ui.button type="button" variant="success" wire:click="convertSelectedWonOpportunity" :disabled="! $this->selectedWonOpportunity">
+                                    Pasar venta a Operaciones
+                                </x-ui.button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
     </div>
 </x-ui.page-container>

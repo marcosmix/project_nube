@@ -7,13 +7,13 @@
         @endif
 
         <x-ui.section-header
-            title="Developers"
-            description="Gestiona capacidad, disponibilidad y skills del equipo tecnico con una interfaz consistente."
+            title="Equipo"
+            description="Gestiona capacidad, disponibilidad y skills del equipo con una interfaz consistente."
             eyebrow="Talento"
         />
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <x-ui.stat-card label="Total developers" :value="number_format($total, 0, ',', '.')" hint="Base completa de talento disponible." tone="primary" />
+            <x-ui.stat-card label="Total equipo" :value="number_format($total, 0, ',', '.')" hint="Base completa de talento disponible." tone="primary" />
             <x-ui.stat-card label="Activos" :value="number_format($activos, 0, ',', '.')" hint="Perfiles habilitados para asignaciones." tone="success" />
             <x-ui.stat-card label="Tiempo completo" :value="number_format($fullTime, 0, ',', '.')" hint="Capacidad principal del equipo actual." tone="info" />
             <x-ui.stat-card label="Freelance" :value="number_format($freelance, 0, ',', '.')" hint="Soporte flexible para picos de demanda." tone="accent" />
@@ -22,12 +22,12 @@
     <x-ui.card class="space-y-5 bg-slate-50/70">
         <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <h2 class="text-lg font-semibold text-slate-950">Equipo de desarrollo</h2>
+                <h2 class="text-lg font-semibold text-slate-950">Equipo</h2>
                 <p class="text-sm text-slate-500">Filtra por estado, disponibilidad y seniority para balancear mejor la asignacion.</p>
             </div>
 
             <x-ui.button type="button" wire:click="openCreate">
-                Nuevo developer
+                Nuevo integrante
             </x-ui.button>
         </div>
 
@@ -37,7 +37,7 @@
                 <x-ui.input
                     id="developers-search"
                     type="text"
-                    placeholder="Buscar developers por nombre, email o github..."
+                    placeholder="Buscar integrantes por nombre, email o github..."
                     wire:model.live.debounce.300ms="search"
                 />
             </div>
@@ -117,7 +117,7 @@
                             <button
                                 wire:click="delete({{ $dev->id }})"
                                 @click="open=false"
-                                wire:confirm="Se eliminara este developer de forma logica y se conservara su historial de asignaciones."
+                                wire:confirm="Se eliminara este integrante de forma logica y se conservara su historial de asignaciones."
                                 class="w-full rounded-xl px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
                             >Eliminar</button>
                         </div>
@@ -172,12 +172,12 @@
             </div>
         @empty
             <div class="col-span-full">
-                <x-ui.empty-state title="No hay developers cargados" description="Incorpora perfiles para empezar a asignarlos a proyectos y medir capacidad." />
+                <x-ui.empty-state title="No hay integrantes cargados" description="Incorpora perfiles para empezar a asignarlos a operaciones y medir capacidad." />
             </div>
         @endforelse
     </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">{{ $developers->links() }}</div>
+    <div class="pt-1">{{ $developers->links() }}</div>
 
     <x-ui.card>
         <div class="mb-3 flex items-center justify-between">
@@ -189,7 +189,7 @@
             @forelse($availableBySkill as $skill => $count)
                 <x-ui.badge variant="success">{{ $skill }}: {{ $count }}</x-ui.badge>
             @empty
-                <span class="text-sm text-slate-500">No hay developers disponibles sin proyectos.</span>
+                <span class="text-sm text-slate-500">No hay integrantes disponibles sin operaciones.</span>
             @endforelse
         </div>
     </x-ui.card>

@@ -108,7 +108,7 @@
         @endforelse
     </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div class="pt-1">
         {{ $clients->onEachSide(1)->links() }}
     </div>
 

@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\Cobros\InstallmentStatus;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PaymentInstallment extends Model
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     protected $casts = [

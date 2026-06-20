@@ -288,7 +288,7 @@
 
                             <div class="mt-5 grid grid-cols-2 gap-3">
                                 <x-ui.panel tone="warning" padding="sm" class="space-y-1">
-                                    <div class="text-xs uppercase tracking-[0.18em] text-amber-800">Pausados</div>
+                                    <div class="text-xs uppercase tracking-[0.18em] text-amber-800">Frenados</div>
                                     <div class="text-2xl font-semibold text-slate-950">{{ number_format($projectOverview['paused'], 0, ',', '.') }}</div>
                                 </x-ui.panel>
                                 <x-ui.panel tone="success" padding="sm" class="space-y-1">
@@ -338,10 +338,10 @@
                 <x-ui.card class="space-y-5 bg-white/95 xl:col-span-4">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h3 class="text-lg font-semibold text-slate-950">Proyectos con foco</h3>
+                            <h3 class="text-lg font-semibold text-slate-950">Operaciones con foco</h3>
                             <p class="text-sm text-slate-500">Hasta 5 para mostrar solo lo que puede crecer indefinidamente.</p>
                         </div>
-                        <x-ui.button href="{{ route('proyectos.index') }}" variant="ghost" size="sm">Proyectos</x-ui.button>
+                        <x-ui.button href="{{ route('proyectos.index') }}" variant="ghost" size="sm">Operaciones</x-ui.button>
                     </div>
 
                     <div class="space-y-3.5">

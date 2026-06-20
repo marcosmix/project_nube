@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Enums\Sales\OpportunitySource;
 use App\Enums\Sales\OpportunityStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Opportunity extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'client_id',
@@ -31,6 +33,7 @@ class Opportunity extends Model
         'contact_email',
         'contact_handle',
         'initial_message',
+        'estimated_ticket_amount',
     ];
 
     protected $casts = [
@@ -40,6 +43,7 @@ class Opportunity extends Model
         'first_customer_message_at' => 'datetime',
         'last_customer_message_at' => 'datetime',
         'customer_service_window_expires_at' => 'datetime',
+        'estimated_ticket_amount' => 'decimal:2',
     ];
 
     public function client(): BelongsTo
@@ -54,7 +58,7 @@ class Opportunity extends Model
 
     public function notes(): HasMany
     {
-        return $this->hasMany(OpportunityNote::class)->latest();
+        return $this->hasMany(OpportunityNote::class)->orderBy('created_at');
     }
 
     public function statusLogs(): HasMany
@@ -65,6 +69,11 @@ class Opportunity extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(OpportunityMessage::class)->orderBy('messaged_at');
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->latest();
     }
 
     public function project(): HasOne
@@ -94,7 +103,6 @@ class Opportunity extends Model
                 });
         });
     }
-
 
     public function getCanReplyFreelyAttribute(): bool
     {
@@ -129,5 +137,15 @@ class Opportunity extends Model
         }
 
         return 'Sin contacto';
+    }
+
+    public function supportsCommercialProposalData(): bool
+    {
+        return in_array($this->status, [
+            OpportunityStatus::Qualified,
+            OpportunityStatus::ProposalSent,
+            OpportunityStatus::Negotiation,
+            OpportunityStatus::Won,
+        ], true);
     }
 }

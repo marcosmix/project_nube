@@ -39,7 +39,7 @@ new class extends Component
                     </x-nav-link>
 
                     <x-nav-link :href="route('proyectos.index')" :active="request()->routeIs('proyectos.*')" wire:navigate>
-                        {{ __('Proyectos') }}
+                        {{ __('Operaciones') }}
                     </x-nav-link>
 
                       <x-nav-link :href="route('cobros.index')" :active="request()->routeIs('cobros.*')" wire:navigate>
@@ -51,7 +51,7 @@ new class extends Component
                     </x-nav-link>
 
                     <x-nav-link :href="route('developers.index')" :active="request()->routeIs('developers.*')" wire:navigate>
-                        {{ __('Developers') }}
+                        {{ __('Equipo') }}
                     </x-nav-link>
 
                 </div>
@@ -83,11 +83,11 @@ new class extends Component
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile')" wire:navigate>
-                            {{ __('Profile') }}
+                            {{ __('Perfil') }}
                         </x-dropdown-link>
 
-                        <x-dropdown-link :href="route('settings.whatsapp')" wire:navigate>
-                            {{ __('Configuración WhatsApp') }}
+                        <x-dropdown-link :href="route('settings.index')" wire:navigate>
+                            {{ __('Configuración') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -128,7 +128,7 @@ new class extends Component
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('proyectos.index')" :active="request()->routeIs('proyectos.*')" wire:navigate>
-                {{ __('Proyectos') }}
+                {{ __('Operaciones') }}
             </x-responsive-nav-link>
 
              <x-responsive-nav-link :href="route('cobros.index')" :active="request()->routeIs('cobros.*')" wire:navigate>
@@ -141,7 +141,7 @@ new class extends Component
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('developers.index')" :active="request()->routeIs('developers.*')" wire:navigate>
-                {{ __('Developers') }}
+                {{ __('Equipo') }}
             </x-responsive-nav-link>
         </div>
 
@@ -154,11 +154,11 @@ new class extends Component
 
                 <div class="mt-4 space-y-2">
                     <x-responsive-nav-link :href="route('profile')" wire:navigate>
-                        {{ __('Profile') }}
+                        {{ __('Perfil') }}
                     </x-responsive-nav-link>
 
-                    <x-responsive-nav-link :href="route('settings.whatsapp')" wire:navigate>
-                        {{ __('Configuración WhatsApp') }}
+                    <x-responsive-nav-link :href="route('settings.index')" wire:navigate>
+                        {{ __('Configuración') }}
                     </x-responsive-nav-link>
 
                     <!-- Authentication -->

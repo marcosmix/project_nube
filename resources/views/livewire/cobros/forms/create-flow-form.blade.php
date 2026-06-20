@@ -1,18 +1,18 @@
-<div class="min-h-[calc(100vh-10rem)] rounded-3xl border border-slate-300 bg-[#fffdfa] shadow-sm">
-    <div class="border-b border-slate-300 px-6 py-6 sm:px-8">
+<div class="flex h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-3xl border border-slate-300 bg-[#fffdfa] shadow-sm">
+    <div class="shrink-0 border-b border-slate-300 px-6 py-6 sm:px-8">
         <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
             <div>
                 <h1 class="text-3xl font-semibold tracking-tight text-slate-950">Nuevo flujo de cobro</h1>
                 <p class="mt-2 text-sm text-slate-600">
-                    Configurá el flujo en 3 pasos: proyecto, cuotas y automatización.
+                    Configurá el flujo en 3 pasos: operación, cuotas y automatizaciones.
                 </p>
             </div>
 
             <div class="grid gap-3 sm:grid-cols-3">
                 @foreach ([
-                    1 => ['title' => 'Cliente y proyecto', 'subtitle' => 'Seleccioná el origen del flujo'],
+                    1 => ['title' => 'Operación', 'subtitle' => 'Seleccioná el origen del flujo'],
                     2 => ['title' => 'Configuración del flujo', 'subtitle' => 'Definí cuotas y fechas'],
-                    3 => ['title' => 'Envío automático', 'subtitle' => 'Ajustá la automatización'],
+                    3 => ['title' => 'Automatizaciones', 'subtitle' => 'Ajustá envíos automáticos'],
                 ] as $step => $meta)
                     @php
                         $stepPalette = match ($step) {
@@ -59,8 +59,8 @@
         </div>
     </div>
 
-    <div class="grid min-h-[42rem] gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="px-6 py-6 sm:px-8">
+    <div class="grid min-h-0 flex-1 gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="min-h-0 overflow-hidden px-6 py-6 sm:px-8">
             @if ($currentStep === 1)
                 @include('livewire.cobros.forms.partials.create-flow-step-1')
             @elseif ($currentStep === 2)
@@ -70,8 +70,8 @@
             @endif
         </div>
 
-        <aside class="border-t border-slate-300 bg-slate-100/80 px-6 py-6 xl:border-l xl:border-t-0">
-            <div class="space-y-5">
+        <aside class="min-h-0 overflow-y-auto border-t border-slate-300 bg-slate-100/80 px-6 py-6 xl:border-l xl:border-t-0">
+            <div class="space-y-5 pr-1">
                 <div>
                     <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-600">Resumen</h2>
                     <p class="mt-1 text-sm text-slate-600">Estado actual del flujo en creación.</p>
@@ -79,14 +79,14 @@
 
                 <div class="space-y-3">
                     <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
-                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Cliente</div>
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Cliente asociado</div>
                         <div class="mt-2 text-sm font-medium text-slate-900">
                             {{ $selectedClient?->organization_name ?? 'Sin seleccionar' }}
                         </div>
                     </div>
 
                     <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
-                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Proyecto</div>
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Operación</div>
                         <div class="mt-2 text-sm font-medium text-slate-900">
                             {{ $selectedProject?->name ?? 'Sin seleccionar' }}
                         </div>
@@ -96,9 +96,23 @@
                     </div>
 
                     <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
-                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Monto total</div>
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Monto base</div>
+                        <div class="mt-2 text-lg font-semibold {{ (float) $operation_amount > 0 ? 'text-slate-900' : 'text-amber-800' }}">
+                            @if ((float) $operation_amount > 0)
+                                ${{ number_format((float) $operation_amount, 2, ',', '.') }}
+                            @else
+                                Sin monto
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
+                        <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Total del flujo</div>
                         <div class="mt-2 text-lg font-semibold text-slate-900">
                             ${{ number_format((float) $total_amount, 2, ',', '.') }}
+                        </div>
+                        <div class="mt-1 text-xs text-slate-600">
+                            Interés: ${{ number_format((float) $interest_amount, 2, ',', '.') }}
                         </div>
                     </div>
 
@@ -129,12 +143,33 @@
                             {{ $this->autoSendEmail ?: 'Sin email detectado' }}
                         </div>
                     </div>
+
+                    @if ($currentStep === 1)
+                        <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
+                            <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">Criterio de accion</div>
+                            <div class="mt-3 space-y-3 text-sm text-slate-700">
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 rounded-full border border-blue-200 bg-blue-400 ring-2 ring-white"></span>
+                                    <span>Aparecen todas las operaciones sin flujo asociado.</span>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 rounded-full border border-amber-200 bg-amber-400 ring-2 ring-white"></span>
+                                    <span>Si falta monto, se muestra pero no permite calcular cuotas.</span>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 rounded-full border border-emerald-200 bg-emerald-400 ring-2 ring-white"></span>
+                                    <span>Con monto cargado, el flujo se puede configurar y guardar.</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </aside>
     </div>
 
-    <div class="flex flex-col gap-3 border-t border-slate-300 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+    <div class="shrink-0 border-t border-slate-300 bg-white px-6 py-5 sm:px-8">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="text-sm text-slate-600">
             Paso {{ $currentStep }} de 3
         </div>
@@ -168,6 +203,7 @@
                     <span wire:loading wire:target="save">Guardando...</span>
                 </button>
             @endif
+        </div>
         </div>
     </div>
 </div>

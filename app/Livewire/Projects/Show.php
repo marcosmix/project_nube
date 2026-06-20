@@ -8,19 +8,46 @@ use App\Models\Project;
 use App\Models\ProjectNote;
 use App\Models\ProjectStatusLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Show extends Component
 {
+    use WithFileUploads;
+
     public Project $project;
 
-    private array $allowedStatuses = ['prospection', 'interested', 'sale_closed', 'execution', 'paused', 'finished'];
+    private array $allowedStatuses = ['sale_closed', 'execution', 'paused', 'finished'];
 
-    private array $progressionOrder = ['prospection', 'interested', 'sale_closed', 'execution', 'finished'];
+    private array $operationalStatuses = ['sale_closed', 'execution', 'paused', 'finished'];
+
+    private array $progressionOrder = ['sale_closed', 'execution', 'finished'];
 
     public array $form = [];
 
     public array $selectedDevelopers = [];
+
+    public bool $showTeamModal = false;
+
+    public bool $showPauseModal = false;
+
+    public bool $showStatusConfirmationModal = false;
+
+    public bool $showExecutionSubStatusModal = false;
+
+    public ?string $pendingStatus = null;
+
+    public ?string $pendingExecutionSubStatus = null;
+
+    public string $pauseReasonDraft = '';
+
+    public string $newNote = '';
+
+    public string $attachmentLabel = '';
+
+    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
+    public $attachmentUpload = null;
 
     public function mount(Project $project): void
     {
@@ -29,6 +56,10 @@ class Show extends Component
             'developers.contact',
             'statusLogs.byUser',
             'notes.byUser',
+            'opportunity.client.contact',
+            'opportunity.notes.byUser',
+            'opportunity.attachments.uploadedBy',
+            'attachments.uploadedBy',
         ]);
 
         $this->hydrateFormFromModel();
@@ -62,7 +93,7 @@ class Show extends Component
     // Mantiene limpio el form cuando cambia de estado.
     public function updatedFormStatus(string $value): void
     {
-        if ($value !== 'execution') {
+        if ($value === 'finished') {
             $this->form['execution_sub_status'] = null;
         }
 
@@ -102,7 +133,7 @@ class Show extends Component
 
         $this->project->update([
             'status' => $status,
-            'execution_sub_status' => $status === 'execution' ? ($this->form['execution_sub_status'] ?? null) : null,
+            'execution_sub_status' => $status === 'finished' ? null : ($this->form['execution_sub_status'] ?? null),
             'pause_reason' => $status === 'paused' ? ($this->form['pause_reason'] ?? null) : null,
             'paused_at' => $status === 'paused' ? now() : null,
             'proposal_url' => $financialLocked ? $this->project->proposal_url : ($this->form['proposal_url'] ?? null),
@@ -116,8 +147,172 @@ class Show extends Component
             $this->logStatus($status);
         }
 
-        $this->project->refresh()->load(['statusLogs.byUser']);
+        $this->refreshProject();
         $this->dispatch('toast', type: 'success', message: 'Estado actualizado automáticamente');
+    }
+
+    public function openStatusConfirmation(string $status): void
+    {
+        if (! $this->canTransitionTo($status)) {
+            return;
+        }
+
+        $this->pendingStatus = $status;
+        $this->showStatusConfirmationModal = true;
+    }
+
+    public function closeStatusConfirmation(): void
+    {
+        $this->pendingStatus = null;
+        $this->showStatusConfirmationModal = false;
+    }
+
+    public function confirmStatusChange(): void
+    {
+        if (! $this->pendingStatus) {
+            return;
+        }
+
+        $status = $this->pendingStatus;
+        $this->closeStatusConfirmation();
+        $this->changeStatus($status);
+    }
+
+    public function requestExecutionSubStatusChange(string $value): void
+    {
+        if (! in_array($this->project->status->value, ['execution', 'paused'], true)) {
+            return;
+        }
+
+        $value = $value !== '' ? $value : null;
+        $current = $this->project->execution_sub_status?->value;
+
+        if ($value === $current) {
+            $this->form['execution_sub_status'] = $current;
+
+            return;
+        }
+
+        $this->pendingExecutionSubStatus = $value;
+        $this->form['execution_sub_status'] = $value;
+        $this->resetValidation('form.execution_sub_status');
+        $this->showExecutionSubStatusModal = true;
+    }
+
+    public function cancelExecutionSubStatusChange(): void
+    {
+        $this->pendingExecutionSubStatus = null;
+        $this->form['execution_sub_status'] = $this->project->execution_sub_status?->value;
+        $this->showExecutionSubStatusModal = false;
+        $this->resetValidation('form.execution_sub_status');
+    }
+
+    public function confirmExecutionSubStatusChange(): void
+    {
+        if (! in_array($this->project->status->value, ['execution', 'paused'], true)) {
+            return;
+        }
+
+        $validated = $this->validate([
+            'pendingExecutionSubStatus' => ['nullable', 'in:on_track,with_debt,delayed'],
+        ], [], [
+            'pendingExecutionSubStatus' => 'subestado de ejecución',
+        ]);
+
+        $subStatus = $validated['pendingExecutionSubStatus'] ?? null;
+
+        $this->project->update([
+            'execution_sub_status' => $subStatus,
+        ]);
+
+        $this->showExecutionSubStatusModal = false;
+        $this->pendingExecutionSubStatus = null;
+        $this->refreshProject();
+
+        $this->dispatch('toast', type: 'success', message: 'Subestado de ejecución actualizado');
+    }
+
+    public function openPauseModal(): void
+    {
+        if ($this->project->status->value !== 'execution') {
+            return;
+        }
+
+        $this->pauseReasonDraft = trim((string) ($this->form['pause_reason'] ?? $this->project->pause_reason ?? ''));
+        $this->resetValidation('pauseReasonDraft');
+        $this->showPauseModal = true;
+    }
+
+    public function closePauseModal(): void
+    {
+        $this->showPauseModal = false;
+        $this->resetValidation('pauseReasonDraft');
+    }
+
+    public function pauseOperation(): void
+    {
+        if ($this->project->status->value !== 'execution') {
+            return;
+        }
+
+        $validated = $this->validate([
+            'pauseReasonDraft' => ['required', 'string', 'min:3'],
+        ], [], [
+            'pauseReasonDraft' => 'motivo de freno',
+        ]);
+
+        $this->form['pause_reason'] = trim($validated['pauseReasonDraft']);
+        $this->closePauseModal();
+        $this->changeStatus('paused');
+    }
+
+    public function resumeOperation(): void
+    {
+        if ($this->project->status->value !== 'paused') {
+            return;
+        }
+
+        $this->changeStatus('execution');
+    }
+
+    public function openTeamModal(): void
+    {
+        if (! in_array($this->project->status->value, ['sale_closed', 'execution', 'paused'], true)) {
+            return;
+        }
+
+        $this->selectedDevelopers = $this->project->developers->pluck('id')->all();
+        $this->resetValidation();
+        $this->showTeamModal = true;
+    }
+
+    public function closeTeamModal(): void
+    {
+        $this->showTeamModal = false;
+        $this->selectedDevelopers = $this->project->developers->pluck('id')->all();
+        $this->resetValidation('selectedDevelopers');
+        $this->resetValidation('selectedDevelopers.*');
+    }
+
+    public function saveTeamAssignments(): void
+    {
+        if (! in_array($this->project->status->value, ['sale_closed', 'execution', 'paused'], true)) {
+            return;
+        }
+
+        $this->validate([
+            'selectedDevelopers' => ['array'],
+            'selectedDevelopers.*' => ['exists:developers,id'],
+        ]);
+
+        $this->project->developers()->sync($this->selectedDevelopers);
+
+        $this->refreshProject();
+
+        $this->hydrateFormFromModel();
+        $this->showTeamModal = false;
+
+        $this->dispatch('toast', type: 'success', message: 'Equipo actualizado');
     }
 
     public function canTransitionTo(string $targetStatus): bool
@@ -125,13 +320,42 @@ class Show extends Component
         return $this->transitionBlockReason($targetStatus) === null;
     }
 
+    public function getAllowedStatusTransitionsProperty(): array
+    {
+        $transitions = [];
+
+        foreach ($this->availableOperationalTransitions() as $status) {
+            if ($this->canTransitionTo($status)) {
+                $transitions[] = $this->statusTransitionData($status);
+            }
+        }
+
+        return $transitions;
+    }
+
+    public function getPendingStatusTransitionProperty(): ?array
+    {
+        if (! $this->pendingStatus || ! in_array($this->pendingStatus, $this->allowedStatuses, true)) {
+            return null;
+        }
+
+        return $this->statusTransitionData($this->pendingStatus);
+    }
+
     public function currentStateIndex(): int
     {
-        return array_search($this->project->status->value, $this->progressionOrder, true) ?: 0;
+        $status = $this->project->status->value;
+        $index = array_search($status, $this->progressionOrder, true);
+
+        return $index === false ? 0 : $index;
     }
 
     public function nextStatus(): ?string
     {
+        if (! in_array($this->project->status->value, $this->progressionOrder, true)) {
+            return null;
+        }
+
         $currentIdx = $this->currentStateIndex();
 
         if ($currentIdx >= count($this->progressionOrder) - 1) {
@@ -143,6 +367,10 @@ class Show extends Component
 
     public function previousStatus(): ?string
     {
+        if (! in_array($this->project->status->value, $this->progressionOrder, true)) {
+            return null;
+        }
+
         $currentIdx = $this->currentStateIndex();
 
         if ($currentIdx <= 0) {
@@ -159,6 +387,95 @@ class Show extends Component
         return $next ? $this->getStatusLabel($next) : null;
     }
 
+    public function getNextStatusButtonLabelProperty(): ?string
+    {
+        $next = $this->nextStatus();
+
+        if (! $next) {
+            return null;
+        }
+
+        return match ($next) {
+            'execution' => 'Comenzar',
+            'finished' => 'Finalizar',
+            default => 'Pasar a '.$this->getStatusLabel($next),
+        };
+    }
+
+    public function getNextStatusButtonVariantProperty(): string
+    {
+        return match ($this->nextStatus()) {
+            'finished' => 'warning',
+            'execution' => 'success',
+            default => 'primary',
+        };
+    }
+
+    public function getSalesNotesProperty()
+    {
+        return $this->project->opportunity?->notes ?? collect();
+    }
+
+    public function addNote(): void
+    {
+        $this->validate([
+            'newNote' => ['required', 'string', 'min:3'],
+        ]);
+
+        $this->project->notes()->create([
+            'content' => $this->newNote,
+            'status' => $this->project->status->value,
+            'by_user_id' => Auth::id(),
+        ]);
+
+        $this->newNote = '';
+        $this->refreshProject();
+
+        $this->dispatch('toast', type: 'success', message: 'Nota agregada');
+    }
+
+    public function saveAttachment(): void
+    {
+        $this->validate([
+            'attachmentLabel' => ['nullable', 'string', 'max:255'],
+            'attachmentUpload' => ['required', 'file', 'max:10240', 'mimes:pdf,png,jpg,jpeg,webp,ppt,pptx,odp'],
+        ], [], [
+            'attachmentLabel' => 'etiqueta del archivo',
+            'attachmentUpload' => 'archivo de la operación',
+        ]);
+
+        $path = $this->attachmentUpload->store('operaciones', 'public');
+
+        $this->project->attachments()->create([
+            'uploaded_by' => Auth::id(),
+            'label' => trim($this->attachmentLabel) !== '' ? trim($this->attachmentLabel) : null,
+            'disk' => 'public',
+            'path' => $path,
+            'original_name' => $this->attachmentUpload->getClientOriginalName(),
+            'mime_type' => $this->attachmentUpload->getMimeType(),
+            'size' => $this->attachmentUpload->getSize(),
+        ]);
+
+        $this->attachmentUpload = null;
+        $this->attachmentLabel = '';
+
+        $this->refreshProject();
+
+        $this->dispatch('toast', type: 'success', message: 'Archivo agregado a la operación');
+    }
+
+    public function removeAttachment(int $attachmentId): void
+    {
+        $attachment = $this->project->attachments()->findOrFail($attachmentId);
+
+        Storage::disk($attachment->disk)->delete($attachment->path);
+        $attachment->delete();
+
+        $this->refreshProject();
+
+        $this->dispatch('toast', type: 'success', message: 'Archivo eliminado');
+    }
+
     public function previousStatusLabel(): ?string
     {
         $prev = $this->previousStatus();
@@ -169,9 +486,7 @@ class Show extends Component
     private function getStatusLabel(string $status): string
     {
         return match ($status) {
-            'prospection' => 'En Prospección',
-            'interested' => 'Interesado',
-            'sale_closed' => 'Venta Cerrada',
+            'sale_closed' => 'Listo para ejecutar',
             'execution' => 'En Ejecución',
             'paused' => 'Frenado',
             'finished' => 'Finalizado',
@@ -198,11 +513,22 @@ class Show extends Component
         }
 
         if ($targetStatus === 'sale_closed' && (int) ($this->form['total_cost'] ?? 0) <= 0) {
-            return 'Para pasar a "Venta Cerrada" debes cargar antes el costo total en Información de Contratación.';
+            return 'Para dejar la operación lista para ejecutar debes cargar antes el costo total en Información de Contratación.';
         }
 
-        // Frenado es dinámico: desde/hacia paused se permite.
-        if ($targetStatus === 'paused' || $currentStatus === 'paused') {
+        if (in_array($currentStatus, $this->operationalStatuses, true)) {
+            $allowedTransitions = match ($currentStatus) {
+                'sale_closed' => ['execution'],
+                'execution' => ['paused', 'finished'],
+                'paused' => ['execution'],
+                'finished' => [],
+                default => [],
+            };
+
+            if (! in_array($targetStatus, $allowedTransitions, true)) {
+                return 'La operación solo permite avanzar según el flujo operativo definido.';
+            }
+
             return null;
         }
 
@@ -241,8 +567,24 @@ class Show extends Component
     {
         return Developer::with('contact')
             ->where('status', 'active')
-            ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->sortBy([
+                fn (Developer $developer) => blank($developer->contact?->job_title) ? 'zzz' : mb_strtolower((string) $developer->contact?->job_title),
+                fn (Developer $developer) => array_search($developer->level, ['lead', 'senior', 'semi_senior', 'junior'], true) ?: 99,
+                fn (Developer $developer) => mb_strtolower(trim(($developer->contact?->last_name ?? '').' '.($developer->contact?->first_name ?? ''))),
+            ])
+            ->values();
+    }
+
+    public function getDevelopersGroupedByJobTitleProperty()
+    {
+        return $this->developers
+            ->groupBy(function (Developer $developer) {
+                $jobTitle = trim((string) ($developer->contact?->job_title ?? ''));
+
+                return $jobTitle !== '' ? $jobTitle : 'Sin puesto definido';
+            })
+            ->sortKeysUsing(fn (string $left, string $right) => strcasecmp($left, $right));
     }
 
     private function rulesFor(string $status): array
@@ -250,19 +592,17 @@ class Show extends Component
         $base = [
             'form.name' => ['required', 'string', 'max:255'],
             'form.client_id' => ['required', 'exists:clients,id'],
-            'form.status' => ['required', 'in:prospection,interested,sale_closed,execution,paused,finished'],
+            'form.status' => ['required', 'in:sale_closed,execution,paused,finished'],
             'form.prospection_notes' => ['nullable', 'string'],
         ];
 
-        if ($status !== 'prospection') {
-            $base += [
-                'form.total_cost' => ['nullable', 'integer', 'min:0'],
-                'form.estimated_start_date' => ['nullable', 'date'],
-                'form.estimated_end_date' => ['nullable', 'date', 'after_or_equal:form.estimated_start_date'],
-                'form.proposal_url' => ['nullable', 'url'],
-                'form.excel_url' => ['nullable', 'url'],
-            ];
-        }
+        $base += [
+            'form.total_cost' => ['nullable', 'integer', 'min:0'],
+            'form.estimated_start_date' => ['nullable', 'date'],
+            'form.estimated_end_date' => ['nullable', 'date', 'after_or_equal:form.estimated_start_date'],
+            'form.proposal_url' => ['nullable', 'url'],
+            'form.excel_url' => ['nullable', 'url'],
+        ];
 
         if (in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true)) {
             $base['selectedDevelopers'] = ['array'];
@@ -296,6 +636,58 @@ class Show extends Component
         ]);
     }
 
+    protected function refreshProject(): void
+    {
+        $this->project->refresh()->load([
+            'client.contact',
+            'developers.contact',
+            'statusLogs.byUser',
+            'notes.byUser',
+            'attachments.uploadedBy',
+            'opportunity.client.contact',
+            'opportunity.notes.byUser',
+            'opportunity.attachments.uploadedBy',
+        ]);
+
+        $this->hydrateFormFromModel();
+    }
+
+    protected function statusTransitionData(string $status): array
+    {
+        return [
+            'value' => $status,
+            'label' => $this->getStatusLabel($status),
+            'buttonLabel' => match ($status) {
+                'execution' => 'Comenzar',
+                'paused' => 'Frenar',
+                'finished' => 'Finalizar',
+                default => 'Pasar a '.$this->getStatusLabel($status),
+            },
+            'description' => match ($status) {
+                'execution' => 'La operación pasará a ejecución activa.',
+                'finished' => 'La operación quedará cerrada y en solo lectura.',
+                'paused' => 'La operación se frenará temporalmente.',
+                default => 'Se avanzará al siguiente estado operativo disponible.',
+            },
+            'variant' => match ($status) {
+                'finished' => 'warning',
+                'execution' => 'success',
+                'paused' => 'accent',
+                default => 'primary',
+            },
+        ];
+    }
+
+    protected function availableOperationalTransitions(): array
+    {
+        return match ($this->project->status->value) {
+            'sale_closed' => ['execution'],
+            'execution' => ['paused', 'finished'],
+            'paused' => [],
+            default => [],
+        };
+    }
+
     public function save(): void
     {
         $this->resetValidation();
@@ -310,7 +702,7 @@ class Show extends Component
         $this->project->update([
             'name' => $this->form['name'],
             'status' => $this->form['status'],
-            'execution_sub_status' => $this->form['execution_sub_status'] ?? null,
+            'execution_sub_status' => ($this->form['status'] ?? null) === 'finished' ? null : ($this->form['execution_sub_status'] ?? null),
             'client_id' => $this->form['client_id'],
 
             'prospection_notes' => $this->form['prospection_notes'] ?? null,
@@ -340,20 +732,13 @@ class Show extends Component
             $this->logStatus($status);
         }
 
-        // Activity note liviana (opcional pero útil)
-        ProjectNote::create([
-            'project_id' => $this->project->id,
-            'content' => "Actualización del proyecto (estado: {$status}).",
-            'status' => $status,
-            'by_user_id' => Auth::id(),
-        ]);
-
         // refresco
         $this->project->refresh()->load([
             'client.contact',
             'developers.contact',
             'statusLogs.byUser',
             'notes.byUser',
+            'attachments.uploadedBy',
         ]);
 
         // re-hidratar por si hay casts/enums
@@ -364,6 +749,19 @@ class Show extends Component
 
     public function render()
     {
-        return view('livewire.projects.show')->layout('layouts.app');
+        return view('livewire.projects.show', [
+            'allowedStatusTransitions' => $this->allowedStatusTransitions,
+            'pendingExecutionSubStatusLabel' => $this->pendingExecutionSubStatus ? $this->getExecutionSubStatusLabel($this->pendingExecutionSubStatus) : 'Sin subestado',
+        ])->layout('layouts.app');
+    }
+
+    private function getExecutionSubStatusLabel(?string $status): string
+    {
+        return match ($status) {
+            'on_track' => 'Al Dia',
+            'with_debt' => 'Con Deuda',
+            'delayed' => 'Con Demora',
+            default => 'Sin subestado',
+        };
     }
 }

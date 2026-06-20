@@ -6,8 +6,8 @@
             <form wire:submit.prevent="save" class="max-h-[90vh] overflow-y-auto">
                 <div class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5">
                     <div>
-                        <h2 class="text-xl font-semibold text-slate-950">{{ $developerId ? 'Editar developer' : 'Nuevo developer' }}</h2>
-                        <p class="mt-1 text-sm text-slate-500">Perfil tecnico, skills, disponibilidad e informacion interna.</p>
+                        <h2 class="text-xl font-semibold text-slate-950">{{ $developerId ? 'Editar integrante' : 'Nuevo integrante' }}</h2>
+                        <p class="mt-1 text-sm text-slate-500">Perfil tecnico, skills, disponibilidad e informacion interna del equipo.</p>
                     </div>
 
                     <button type="button" wire:click="close" class="rounded-2xl p-2 text-slate-500 transition hover:bg-slate-100">✕</button>
@@ -44,7 +44,12 @@
                             </div>
                             <div>
                                 <x-ui.label>Puesto</x-ui.label>
-                                <x-ui.input type="text" wire:model.live="puesto" />
+                                <x-ui.select wire:model.live="puesto">
+                                    <option value="">Seleccionar puesto</option>
+                                    @foreach($jobPositions as $jobPosition)
+                                        <option value="{{ $jobPosition->name }}">{{ $jobPosition->name }}{{ $jobPosition->is_active ? '' : ' (Inactivo)' }}</option>
+                                    @endforeach
+                                </x-ui.select>
                                 @error('puesto') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>

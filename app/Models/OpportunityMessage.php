@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Enums\Sales\OpportunityMessageDirection;
 use App\Enums\Sales\OpportunityMessageType;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OpportunityMessage extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'opportunity_id',

@@ -43,6 +43,7 @@ class CreateOpportunityAction
                 'contact_email' => $data['contact_email'] ?? null,
                 'contact_handle' => $data['contact_handle'] ?? null,
                 'initial_message' => $data['initial_message'] ?? null,
+                'estimated_ticket_amount' => $data['estimated_ticket_amount'] ?? null,
             ]);
 
             $opportunity->statusLogs()->create([

@@ -6,9 +6,14 @@
             eyebrow="ERP Nube"
         >
             <x-slot:actions>
-                <x-ui.button href="{{ route('cobros.create') }}" variant="accent">
-                    Nuevo flujo
-                </x-ui.button>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                    <x-ui.button href="{{ route('cobros.create') }}" variant="accent">
+                        Nuevo flujo
+                    </x-ui.button>
+                    <x-ui.button href="{{ route('cobros.scheduled.create') }}" variant="primary">
+                        Nuevo Cobro
+                    </x-ui.button>
+                </div>
             </x-slot:actions>
         </x-ui.section-header>
 

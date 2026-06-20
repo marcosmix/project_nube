@@ -44,6 +44,11 @@ class Client extends Model
         return $this->hasMany(Opportunity::class);
     }
 
+    public function scheduledCharges(): HasMany
+    {
+        return $this->hasMany(ScheduledCharge::class);
+    }
+
     public function getCompanySizeLabelAttribute(): string
     {
         return self::COMPANY_SIZES[$this->company_size] ?? $this->company_size;

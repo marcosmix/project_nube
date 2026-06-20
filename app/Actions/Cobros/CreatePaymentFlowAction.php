@@ -32,7 +32,7 @@ class CreatePaymentFlowAction
      */
     public function execute(Project $project, array $data, ?User $user = null): PaymentFlow
     {
-        $this->ensureProjectHasNoOpenFlow($project);
+        $this->ensureProjectHasNoFlow($project);
 
         return DB::transaction(function () use ($project, $data, $user) {
             $status = $data['status'] ?? PaymentFlowStatus::Active->value;
@@ -58,19 +58,15 @@ class CreatePaymentFlowAction
         });
     }
 
-    protected function ensureProjectHasNoOpenFlow(Project $project): void
+    protected function ensureProjectHasNoFlow(Project $project): void
     {
         $exists = PaymentFlow::query()
             ->where('project_id', $project->id)
-            ->whereIn('status', [
-                PaymentFlowStatus::Draft->value,
-                PaymentFlowStatus::Active->value,
-            ])
             ->exists();
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'project_id' => 'Este proyecto ya tiene un flujo de cobro activo o en borrador.',
+                'project_id' => 'Este proyecto ya tiene un flujo de cobro asociado.',
             ]);
         }
     }

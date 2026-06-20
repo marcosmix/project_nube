@@ -146,7 +146,6 @@ class Index extends Component
             'contact_phone' => $data['contact_phone'] ?: null,
             'contact_email' => $data['contact_email'] ?: null,
             'contact_handle' => $data['contact_handle'] ?: null,
-            'initial_message' => $data['initial_message'] ?: null,
             'initial_note' => $data['initial_note'] ?: null,
             'new_client' => $data['client_mode'] === 'create_new' ? [
                 'first_name' => $data['new_client_first_name'],
@@ -242,6 +241,7 @@ class Index extends Component
     {
         return Opportunity::query()
             ->with(['client.contact', 'responsibleUser', 'notes.byUser', 'statusLogs.byUser'])
+            ->withCount('attachments')
             ->search($this->search)
             ->when($this->status !== '', fn ($query) => $query->where('status', $this->status))
             ->when($this->source !== '', fn ($query) => $query->where('source', $this->source))
@@ -258,7 +258,6 @@ class Index extends Component
             'createForm.status' => ['required', 'in:'.implode(',', array_column($this->initialStatusOptions(), 'value'))],
             'createForm.source' => ['required', 'in:'.implode(',', array_column(OpportunitySource::options(), 'value'))],
             'createForm.first_contact_at' => ['nullable', 'date'],
-            'createForm.initial_message' => ['nullable', 'string'],
             'createForm.initial_note' => ['nullable', 'string'],
         ];
     }
@@ -290,8 +289,6 @@ class Index extends Component
                 OpportunityStatus::New->value,
                 OpportunityStatus::Contacted->value,
                 OpportunityStatus::Qualified->value,
-                OpportunityStatus::ProposalSent->value,
-                OpportunityStatus::Negotiation->value,
             ], true),
         ));
     }
@@ -310,7 +307,6 @@ class Index extends Component
             'contact_phone' => '',
             'contact_email' => '',
             'contact_handle' => '',
-            'initial_message' => '',
             'initial_note' => '',
             'new_client_first_name' => '',
             'new_client_last_name' => '',
@@ -357,10 +353,6 @@ class Index extends Component
 
         if (! empty($data['contact_handle'])) {
             $notes[] = 'Usuario/red social de referencia: '.$data['contact_handle'];
-        }
-
-        if (! empty($data['initial_message'])) {
-            $notes[] = 'Mensaje inicial: '.$data['initial_message'];
         }
 
         if (! empty($data['initial_note'])) {

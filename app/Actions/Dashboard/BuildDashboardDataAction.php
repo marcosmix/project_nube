@@ -618,8 +618,6 @@ class BuildDashboardDataAction
     protected function projectColor(string $status): string
     {
         return match ($status) {
-            ProjectStatus::Prospection->value => 'bg-sky-400',
-            ProjectStatus::Interested->value => 'bg-indigo-400',
             ProjectStatus::SaleClosed->value => 'bg-violet-400',
             ProjectStatus::Execution->value => 'bg-emerald-400',
             ProjectStatus::Paused->value => 'bg-amber-400',

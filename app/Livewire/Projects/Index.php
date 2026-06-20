@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Projects;
 
+use App\Actions\Sales\ConvertOpportunityToProjectAction;
 use App\Actions\Projects\DeleteProjectAction;
+use App\Enums\Sales\OpportunityStatus;
+use App\Models\Opportunity;
 use App\Models\Client;
 use App\Models\Developer;
 use App\Models\Project;
-use App\Models\ProjectStatusLog;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -23,6 +25,12 @@ class Index extends Component
 
     public bool $showCreateModal = false;
 
+    public int $createStep = 1;
+
+    public string $opportunitySearch = '';
+
+    public ?int $selectedWonOpportunityId = null;
+
     public ?int $pendingDeleteProjectId = null;
 
     public string $pendingDeleteProjectName = '';
@@ -34,7 +42,7 @@ class Index extends Component
     // Form (simple)
     public array $form = [
         'name' => '',
-        'status' => 'prospection',
+        'status' => 'sale_closed',
         'execution_sub_status' => null,
         'client_id' => null,
 
@@ -73,13 +81,59 @@ class Index extends Component
     public function openCreate(): void
     {
         $this->resetValidation();
-        $this->resetForm();
+        $this->createStep = 1;
+        $this->opportunitySearch = '';
+        $this->selectedWonOpportunityId = null;
+        $this->resetPage('wonOpportunitiesPage');
         $this->showCreateModal = true;
     }
 
     public function closeCreate(): void
     {
         $this->showCreateModal = false;
+        $this->createStep = 1;
+        $this->opportunitySearch = '';
+        $this->selectedWonOpportunityId = null;
+        $this->resetValidation();
+    }
+
+    public function updatedOpportunitySearch(): void
+    {
+        $this->selectedWonOpportunityId = null;
+        $this->resetPage('wonOpportunitiesPage');
+    }
+
+    public function selectWonOpportunity(int $opportunityId): void
+    {
+        $opportunity = $this->availableWonOpportunitiesQuery()
+            ->whereKey($opportunityId)
+            ->first();
+
+        if (! $opportunity) {
+            return;
+        }
+
+        $this->selectedWonOpportunityId = $opportunity->id;
+    }
+
+    public function goToCreateReview(): void
+    {
+        $this->validate([
+            'selectedWonOpportunityId' => ['required', 'integer'],
+        ], [], [
+            'selectedWonOpportunityId' => 'venta ganada seleccionada',
+        ]);
+
+        if (! $this->selectedWonOpportunity) {
+            return;
+        }
+
+        $this->createStep = 2;
+    }
+
+    public function backToCreateSelection(): void
+    {
+        $this->createStep = 1;
     }
 
     public function confirmDelete(int $projectId): void
@@ -113,7 +167,7 @@ class Index extends Component
 
         session()->flash(
             'status',
-            "Proyecto {$project->name} eliminado de forma logica. Los {$this->pendingDeleteProjectFlows} flujo(s) de cobro siguen disponibles."
+            "Operación {$project->name} eliminada de forma logica. Los {$this->pendingDeleteProjectFlows} flujo(s) de cobro siguen disponibles."
         );
 
         $this->finishDelete();
@@ -127,116 +181,31 @@ class Index extends Component
 
         session()->flash(
             'status',
-            "Proyecto {$project->name} y sus {$this->pendingDeleteProjectFlows} flujo(s) de cobro quedaron archivados con soft delete."
+            "Operación {$project->name} y sus {$this->pendingDeleteProjectFlows} flujo(s) de cobro quedaron archivados con soft delete."
         );
 
         $this->finishDelete();
     }
 
-    private function resetForm(): void
+    public function convertSelectedWonOpportunity(ConvertOpportunityToProjectAction $convertOpportunityToProjectAction): void
     {
-        $this->form = [
-            'name' => '',
-            'status' => 'prospection',
-            'execution_sub_status' => null,
-            'client_id' => null,
-            'prospection_notes' => null,
-            'proposal_url' => null,
-            'excel_url' => null,
-            'total_cost' => null,
-            'estimated_start_date' => null,
-            'estimated_end_date' => null,
-            'sprint_close_day' => null,
-            'actual_start_date' => null,
-            'pause_reason' => null,
-        ];
-
-        $this->selectedDevelopers = [];
-    }
-
-    private function rulesFor(string $status): array
-    {
-        $base = [
-            'form.name' => ['required', 'string', 'max:255'],
-            'form.client_id' => ['required', 'exists:clients,id'],
-            'form.status' => ['required', 'in:prospection,interested,sale_closed,execution,paused,finished'],
-            'form.prospection_notes' => ['nullable', 'string'],
-        ];
-
-        if ($status !== 'prospection') {
-            $base += [
-                'form.total_cost' => ['nullable', 'integer', 'min:0'],
-                'form.estimated_start_date' => ['nullable', 'date'],
-                'form.estimated_end_date' => ['nullable', 'date', 'after_or_equal:form.estimated_start_date'],
-                'form.proposal_url' => ['nullable', 'url'],
-                'form.excel_url' => ['nullable', 'url'],
-            ];
-        }
-
-        if (in_array($status, ['sale_closed', 'execution', 'paused', 'finished'], true)) {
-            $base['selectedDevelopers'] = ['array'];
-            $base['selectedDevelopers.*'] = ['exists:developers,id'];
-        }
-
-        if (in_array($status, ['execution', 'paused', 'finished'], true)) {
-            $base += [
-                'form.sprint_close_day' => ['nullable', 'integer', 'min:1', 'max:31'],
-                'form.actual_start_date' => ['nullable', 'date'],
-            ];
-        }
-
-        if ($status === 'execution') {
-            $base['form.execution_sub_status'] = ['nullable', 'in:on_track,with_debt,delayed'];
-        }
-
-        if ($status === 'paused') {
-            $base['form.pause_reason'] = ['required', 'string', 'min:3'];
-        }
-
-        return $base;
-    }
-
-    public function create(): void
-    {
-        // Todo proyecto nuevo inicia en prospección.
-        $status = 'prospection';
-        $this->form['status'] = $status;
-        $this->form['execution_sub_status'] = null;
-        $this->form['pause_reason'] = null;
-
-        $this->validate($this->rulesFor($status));
-
-        $project = Project::create([
-            'name' => $this->form['name'],
-            'status' => $status,
-            'execution_sub_status' => null,
-            'client_id' => $this->form['client_id'],
-
-            'prospection_notes' => $this->form['prospection_notes'],
-
-            'proposal_url' => null,
-            'excel_url' => null,
-            'total_cost' => null,
-            'estimated_start_date' => null,
-            'estimated_end_date' => null,
-
-            'sprint_close_day' => null,
-            'actual_start_date' => null,
-
-            'pause_reason' => null,
-            'paused_at' => null,
+        $this->validate([
+            'selectedWonOpportunityId' => ['required', 'integer'],
+        ], [], [
+            'selectedWonOpportunityId' => 'venta ganada seleccionada',
         ]);
 
-        $project->developers()->sync([]);
+        $opportunity = $this->selectedWonOpportunity;
 
-        ProjectStatusLog::create([
-            'project_id' => $project->id,
-            'status' => $project->status->value,
-            'by_user_id' => Auth::id(),
-            'created_at' => now(),
-        ]);
+        if (! $opportunity) {
+            return;
+        }
 
-        $this->showCreateModal = false;
+        $project = $convertOpportunityToProjectAction->execute($opportunity, Auth::user());
+
+        $this->closeCreate();
+
+        $this->dispatch('toast', type: 'success', message: 'Venta pasada a Operaciones');
 
         $this->redirectRoute('proyectos.show', $project);
     }
@@ -256,6 +225,38 @@ class Index extends Component
             ->where('status', 'active')
             ->orderBy('id', 'desc')
             ->get();
+    }
+
+    public function getSelectedWonOpportunityProperty(): ?Opportunity
+    {
+        if (! $this->selectedWonOpportunityId) {
+            return null;
+        }
+
+        return $this->availableWonOpportunitiesQuery()
+            ->with(['attachments.uploadedBy', 'notes.byUser'])
+            ->find($this->selectedWonOpportunityId);
+    }
+
+    public function getWonOpportunitiesProperty()
+    {
+        return $this->availableWonOpportunitiesQuery()
+            ->paginate(8, ['*'], 'wonOpportunitiesPage');
+    }
+
+    protected function availableWonOpportunitiesQuery()
+    {
+        return Opportunity::query()
+            ->with(['client.contact'])
+            ->withCount(['attachments', 'notes'])
+            ->search($this->opportunitySearch)
+            ->where('status', OpportunityStatus::Won->value)
+            ->whereNotExists(function ($query) {
+                $query->selectRaw(1)
+                    ->from('projects')
+                    ->whereColumn('projects.opportunity_id', 'opportunities.id');
+            })
+            ->latest('updated_at');
     }
 
     private function resolvePendingProject(): Project
