@@ -59,14 +59,14 @@
         </div>
     @else
         <div class="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-            <div class="min-h-0 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-h-0 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-sm [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
                 <div class="space-y-5">
                     <div class="rounded-2xl border border-orange-200 bg-orange-50/80 p-5 shadow-sm">
                         <div class="text-sm font-medium text-slate-900">{{ $selectedProject->name }}</div>
                         <div class="mt-1 text-sm text-slate-600">{{ $selectedProject->status->label() }}</div>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
+                    <div class="grid gap-3.5 md:grid-cols-2">
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-700">Monto de la operación</label>
                         <input
@@ -230,10 +230,13 @@
                         </div>
                     </div>
 
-                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                    <div class="relative min-h-0 flex-1 overflow-hidden px-5 py-4">
+                        <div class="absolute inset-x-5 top-0 z-10 h-6 bg-gradient-to-b from-white via-white/90 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-x-5 bottom-0 z-10 h-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none"></div>
+                        <div class="h-full overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
                         <div class="space-y-3">
                     @foreach ($installmentRows as $index => $row)
-                        <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
+                        <div class="rounded-2xl border border-slate-300 bg-white p-3.5 shadow-sm">
                             <div class="grid gap-4 md:grid-cols-[110px_minmax(0,1fr)_180px] md:items-end">
                                 <div>
                                     <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Cuota</div>
@@ -268,6 +271,7 @@
                             </div>
                         </div>
                     @endforeach
+                        </div>
                         </div>
                     </div>
                 </div>

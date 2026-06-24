@@ -52,7 +52,12 @@ echo "Reiniciando colas si existen..."
 php artisan queue:restart || true
 
 echo "Corrigiendo permisos..."
-chmod -R ug+rwx storage bootstrap/cache
+sudo chown -R admin:www-data storage bootstrap/cache public/build
+
+sudo find storage bootstrap/cache public/build -type d -exec chmod 775 {} \;
+sudo find storage bootstrap/cache public/build -type f -exec chmod 664 {} \;
+
+php artisan storage:link || true
 
 echo "Levantando aplicación..."
 php artisan up

@@ -6,7 +6,7 @@
         </p>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
         <div class="max-w-3xl space-y-5 pr-1">
         <label class="flex cursor-pointer items-start gap-4 rounded-2xl border p-5 shadow-sm transition {{ $auto_send_enabled ? 'border-blue-300 bg-blue-50/80' : 'border-slate-300 bg-white hover:border-blue-300 hover:bg-blue-50/40' }}">
             <input

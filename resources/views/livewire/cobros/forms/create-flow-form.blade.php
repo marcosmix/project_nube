@@ -70,8 +70,10 @@
             @endif
         </div>
 
-        <aside class="min-h-0 overflow-y-auto border-t border-slate-300 bg-slate-100/80 px-6 py-6 xl:border-l xl:border-t-0">
-            <div class="space-y-5 pr-1">
+        <aside class="relative min-h-0 overflow-hidden border-t border-slate-300 bg-slate-100/80 px-6 py-6 xl:border-l xl:border-t-0">
+            <div class="absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-slate-100/90 to-transparent pointer-events-none"></div>
+            <div class="absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-slate-100/90 to-transparent pointer-events-none"></div>
+            <div class="h-full space-y-5 overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
                 <div>
                     <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-600">Resumen</h2>
                     <p class="mt-1 text-sm text-slate-600">Estado actual del flujo en creación.</p>
