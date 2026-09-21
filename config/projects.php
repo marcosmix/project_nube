@@ -6,6 +6,7 @@ return [
         'execution'   => ['label'=>'En Ejecución','bar'=>'bg-blue-600','badge'=>'bg-blue-100 text-blue-900','border'=>'border-blue-300'],
         'paused'      => ['label'=>'Frenado','bar'=>'bg-purple-500','badge'=>'bg-purple-100 text-purple-900','border'=>'border-purple-300'],
         'finished'    => ['label'=>'Finalizado','bar'=>'bg-cyan-600','badge'=>'bg-cyan-100 text-cyan-900','border'=>'border-cyan-300'],
+        'cancelled'   => ['label'=>'Cancelado','bar'=>'bg-slate-700','badge'=>'bg-slate-200 text-slate-900','border'=>'border-slate-400'],
     ],
     'execution_sub' => [
         'on_track'  => ['label'=>'Al Día','badge'=>'bg-blue-100 text-blue-800'],

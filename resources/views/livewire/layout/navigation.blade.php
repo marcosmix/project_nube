@@ -23,9 +23,9 @@ new class extends Component
             <div class="flex items-center gap-6">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 rounded-2xl px-2 py-1.5 transition hover:bg-white/5">
-                        <x-application-logo class="block h-8 w-auto sm:h-9" />
-                    </a>
+<a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 rounded-2xl px-2 py-1.5 transition hover:bg-white/5">
+                            <img src="{{ asset('favicon-black.png') }}" alt="NubeERP" class="block h-8 w-auto sm:h-9">
+                        </a>
                 </div>
 
                 <!-- Navigation Links -->

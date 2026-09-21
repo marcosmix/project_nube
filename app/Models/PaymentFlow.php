@@ -25,6 +25,7 @@ class PaymentFlow extends Model
         'start_date' => 'date',
         'activated_at' => 'datetime',
         'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     public function project(): BelongsTo
@@ -40,6 +41,16 @@ class PaymentFlow extends Model
     public function installments(): HasMany
     {
         return $this->hasMany(PaymentInstallment::class)->orderBy('number');
+    }
+
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(PaymentFlowStatusLog::class)->latest('changed_at');
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     protected function totalPaid(): Attribute

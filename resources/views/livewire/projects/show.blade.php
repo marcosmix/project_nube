@@ -20,6 +20,7 @@
         'execution' => 'border-blue-200 bg-blue-50/30',
         'paused' => 'border-purple-200 bg-purple-50/30',
         'finished' => 'border-cyan-200 bg-cyan-50/30',
+        'cancelled' => 'border-slate-300 bg-slate-100',
     ];
     $cardTone = $sectionTone[$status] ?? 'border-gray-200 bg-white';
 
@@ -117,6 +118,14 @@
                         <x-ui.button type="button" variant="secondary" class="mt-4 w-full justify-center" wire:click="resumeOperation">
                             Reanudar
                         </x-ui.button>
+                    </div>
+                @endif
+
+                @if(in_array($status, ['sale_closed', 'execution', 'paused'], true))
+                    <div class="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 shadow-sm">
+                        <div class="text-sm font-semibold text-slate-950">Cancelar operación</div>
+                        <p class="mt-1 text-xs leading-5 text-slate-600">Detiene el trabajo y registra que el equipo deja de trabajar en este proyecto.</p>
+                        <x-ui.button type="button" variant="danger" class="mt-4 w-full justify-center" wire:click="openCancelModal">Cancelar operación</x-ui.button>
                     </div>
                 @endif
 
@@ -263,11 +272,11 @@
                     <div class="rounded-2xl border p-6 shadow-sm {{ $cardTone }}">
                         <div class="mb-4 text-xl text-gray-900">Información de Contratación</div>
                         <div class="h-px bg-gray-100 mb-4"></div>
-                        @if($isFinancialLocked)
+                                        @if($isFinancialLocked && $status !== 'sale_closed')
                             <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
                                 Esta información queda bloqueada desde "Venta Cerrada" y el monto se reutiliza al crear un flujo de cobro.
                             </div>
-                        @else
+                                        @else
                             <div class="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
                                 Cargá el costo total antes de pasar a "Venta Cerrada".
                             </div>
@@ -278,11 +287,20 @@
                                 <div class="text-sm text-gray-600">Costo Total</div>
                                 <input type="number"
                                        wire:model.defer="form.total_cost"
-                                       @disabled($isFinished || $isFinancialLocked)
+                                       @disabled($isFinished || $status !== 'sale_closed')
                                        class="mt-1 w-full rounded-lg border border-gray-200 px-4 py-2 disabled:bg-gray-50"
                                        placeholder="450000" />
                                 @error('form.total_cost') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
                             </div>
+
+                            @if($status === 'sale_closed')
+                                <div class="md:col-span-2">
+                                    <x-ui.label>Motivo del cambio de monto</x-ui.label>
+                                    <x-ui.textarea wire:model.defer="amountChangeReason" rows="2" placeholder="Ej: Ajuste aprobado por el cliente"></x-ui.textarea>
+                                    @error('amountChangeReason') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                                    <x-ui.button type="button" variant="secondary" class="mt-3" wire:click="saveClosedAmount">Guardar monto y registrar cambio</x-ui.button>
+                                </div>
+                            @endif
 
                             <div>
                                 <div class="text-sm text-gray-600">Fecha Posible de Inicio</div>
@@ -521,6 +539,20 @@
                     </div>
                 </div>
 
+                <div class="rounded-2xl border p-6 shadow-sm {{ $cardTone }}">
+                    <div class="mb-4 text-lg text-gray-900">Historial de montos</div>
+                    <div class="space-y-3">
+                        @forelse($project->amountHistories as $history)
+                            <div class="rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
+                                <div class="font-medium text-slate-900">${{ number_format((float) $history->old_amount, 2, ',', '.') }} → ${{ number_format((float) $history->new_amount, 2, ',', '.') }}</div>
+                                <div class="mt-1">{{ $history->reason }} · {{ $history->changedBy?->name ?? 'Sistema' }} · {{ $history->created_at?->format('d/m/Y H:i') }}</div>
+                            </div>
+                        @empty
+                            <div class="text-sm text-slate-500">Sin cambios registrados.</div>
+                        @endforelse
+                    </div>
+                </div>
+
                 {{-- NOTES VENTA --}}
                 <div class="rounded-2xl border p-6 shadow-sm {{ $cardTone }}">
                     <details>
@@ -713,6 +745,21 @@
                             <x-ui.button type="button" variant="secondary" wire:click="closeTeamModal">Cancelar</x-ui.button>
                             <x-ui.button type="button" wire:click="saveTeamAssignments">Guardar equipo</x-ui.button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if($showCancelModal)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+                <div class="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+                    <h3 class="text-lg font-semibold text-slate-950">Cancelar operación</h3>
+                    <p class="mt-1 text-sm text-slate-500">Esta acción detiene el flujo operativo y no permite reanudarlo.</p>
+                    <x-ui.textarea class="mt-5" wire:model.defer="cancelReasonDraft" rows="4" placeholder="Indica el motivo de cancelación"></x-ui.textarea>
+                    @error('cancelReasonDraft') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                    <div class="mt-5 flex justify-end gap-3">
+                        <x-ui.button type="button" variant="secondary" wire:click="closeCancelModal">Volver</x-ui.button>
+                        <x-ui.button type="button" variant="danger" wire:click="cancelOperation">Confirmar cancelación</x-ui.button>
                     </div>
                 </div>
             </div>

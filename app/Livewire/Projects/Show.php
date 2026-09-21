@@ -7,6 +7,8 @@ use App\Models\Developer;
 use App\Models\Project;
 use App\Models\ProjectNote;
 use App\Models\ProjectStatusLog;
+use App\Actions\Projects\CancelProjectAction;
+use App\Actions\Projects\UpdateProjectTotalCostAction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -18,7 +20,7 @@ class Show extends Component
 
     public Project $project;
 
-    private array $allowedStatuses = ['sale_closed', 'execution', 'paused', 'finished'];
+    private array $allowedStatuses = ['sale_closed', 'execution', 'paused', 'finished', 'cancelled'];
 
     private array $operationalStatuses = ['sale_closed', 'execution', 'paused', 'finished'];
 
@@ -36,11 +38,16 @@ class Show extends Component
 
     public bool $showExecutionSubStatusModal = false;
 
+    public bool $showCancelModal = false;
+
     public ?string $pendingStatus = null;
 
     public ?string $pendingExecutionSubStatus = null;
 
     public string $pauseReasonDraft = '';
+
+    public string $cancelReasonDraft = '';
+    public string $amountChangeReason = '';
 
     public string $newNote = '';
 
@@ -55,6 +62,7 @@ class Show extends Component
             'client.contact',
             'developers.contact',
             'statusLogs.byUser',
+            'amountHistories.changedBy',
             'notes.byUser',
             'opportunity.client.contact',
             'opportunity.notes.byUser',
@@ -109,7 +117,7 @@ class Show extends Component
     {
         $currentStatus = $this->project->status->value;
 
-        if ($currentStatus === 'finished') {
+        if (in_array($currentStatus, ['finished', 'cancelled'], true)) {
             return;
         }
 
@@ -273,6 +281,42 @@ class Show extends Component
         }
 
         $this->changeStatus('execution');
+    }
+
+    public function openCancelModal(): void
+    {
+        if (in_array($this->project->status->value, ['finished', 'cancelled'], true)) return;
+        $this->cancelReasonDraft = '';
+        $this->resetValidation('cancelReasonDraft');
+        $this->showCancelModal = true;
+    }
+
+    public function closeCancelModal(): void
+    {
+        $this->showCancelModal = false;
+        $this->resetValidation('cancelReasonDraft');
+    }
+
+    public function cancelOperation(CancelProjectAction $action): void
+    {
+        $validated = $this->validate(['cancelReasonDraft' => ['required', 'string', 'min:3', 'max:2000']]);
+        $this->project = $action->execute($this->project, $validated['cancelReasonDraft'], Auth::user());
+        $this->closeCancelModal();
+        $this->refreshProject();
+        $this->dispatch('toast', type: 'success', message: 'Operación cancelada.');
+    }
+
+    public function saveClosedAmount(UpdateProjectTotalCostAction $action): void
+    {
+        if ($this->project->status->value !== 'sale_closed') return;
+        $this->validate([
+            'form.total_cost' => ['required', 'numeric', 'min:0.01'],
+            'amountChangeReason' => ['required', 'string', 'min:3', 'max:2000'],
+        ]);
+        $this->project = $action->execute($this->project, $this->form['total_cost'], $this->amountChangeReason, Auth::user());
+        $this->amountChangeReason = '';
+        $this->refreshProject();
+        $this->dispatch('toast', type: 'success', message: 'Monto cerrado actualizado y registrado.');
     }
 
     public function openTeamModal(): void
@@ -490,6 +534,7 @@ class Show extends Component
             'execution' => 'En Ejecución',
             'paused' => 'Frenado',
             'finished' => 'Finalizado',
+            'cancelled' => 'Cancelado',
             default => ucfirst($status),
         };
     }
@@ -518,9 +563,9 @@ class Show extends Component
 
         if (in_array($currentStatus, $this->operationalStatuses, true)) {
             $allowedTransitions = match ($currentStatus) {
-                'sale_closed' => ['execution'],
-                'execution' => ['paused', 'finished'],
-                'paused' => ['execution'],
+                'sale_closed' => ['execution', 'cancelled'],
+                'execution' => ['paused', 'finished', 'cancelled'],
+                'paused' => ['execution', 'cancelled'],
                 'finished' => [],
                 default => [],
             };
@@ -592,7 +637,7 @@ class Show extends Component
         $base = [
             'form.name' => ['required', 'string', 'max:255'],
             'form.client_id' => ['required', 'exists:clients,id'],
-            'form.status' => ['required', 'in:sale_closed,execution,paused,finished'],
+            'form.status' => ['required', 'in:sale_closed,execution,paused,finished,cancelled'],
             'form.prospection_notes' => ['nullable', 'string'],
         ];
 
@@ -642,6 +687,7 @@ class Show extends Component
             'client.contact',
             'developers.contact',
             'statusLogs.byUser',
+            'amountHistories.changedBy',
             'notes.byUser',
             'attachments.uploadedBy',
             'opportunity.client.contact',
@@ -681,8 +727,8 @@ class Show extends Component
     protected function availableOperationalTransitions(): array
     {
         return match ($this->project->status->value) {
-            'sale_closed' => ['execution'],
-            'execution' => ['paused', 'finished'],
+                'sale_closed' => ['execution', 'cancelled'],
+                'execution' => ['paused', 'finished', 'cancelled'],
             'paused' => [],
             default => [],
         };

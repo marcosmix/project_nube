@@ -3,6 +3,7 @@
 namespace App\Livewire\Cobros;
 
 use App\Actions\Cobros\VoidPaymentAction;
+use App\Actions\Cobros\CancelPaymentFlowAction;
 use App\Enums\Cobros\InstallmentStatus;
 use App\Enums\Cobros\PaymentFlowStatus;
 use App\Enums\Cobros\PaymentStatus;
@@ -35,6 +36,8 @@ class Show extends Component
     public ?int $paymentBeingVoidedId = null;
 
     public string $voidReason = '';
+    public bool $isCancelFlowModalOpen = false;
+    public string $cancelFlowReason = '';
 
     public function mount(PaymentFlow $paymentFlow): void
     {
@@ -57,6 +60,12 @@ class Show extends Component
 
     public function handleEscape(): void
     {
+        if ($this->isCancelFlowModalOpen) {
+            $this->closeCancelFlowModal();
+
+            return;
+        }
+
         if ($this->isVoidPaymentModalOpen) {
             $this->closeVoidPaymentModal();
 
@@ -116,6 +125,29 @@ class Show extends Component
         $this->resetValidation();
     }
 
+    public function openCancelFlowModal(): void
+    {
+        if (! in_array($this->paymentFlow->status, [PaymentFlowStatus::Draft, PaymentFlowStatus::Active], true)) return;
+        $this->cancelFlowReason = '';
+        $this->resetValidation('cancelFlowReason');
+        $this->isCancelFlowModalOpen = true;
+    }
+
+    public function closeCancelFlowModal(): void
+    {
+        $this->isCancelFlowModalOpen = false;
+        $this->resetValidation('cancelFlowReason');
+    }
+
+    public function cancelFlow(CancelPaymentFlowAction $action): void
+    {
+        $validated = $this->validate(['cancelFlowReason' => ['required', 'string', 'min:3', 'max:2000']]);
+        $action->execute($this->paymentFlow, $validated['cancelFlowReason'], Auth::user());
+        $this->closeCancelFlowModal();
+        $this->reloadFlow();
+        $this->dispatch('notify', type: 'success', message: 'Flujo de cobro cancelado.');
+    }
+
     public function voidPayment(VoidPaymentAction $voidPaymentAction): void
     {
         $validated = $this->validate([
@@ -160,6 +192,7 @@ class Show extends Component
                 'installments.payments.receipts',
                 'installments.payments.voidedBy',
                 'installments.statusLogs.user',
+                'statusLogs.byUser',
             ])
             ->find($this->paymentFlow->getKey())
             ?? throw (new ModelNotFoundException)->setModel(PaymentFlow::class, [$this->paymentFlow->getKey()]);

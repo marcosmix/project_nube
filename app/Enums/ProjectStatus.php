@@ -8,6 +8,7 @@ enum ProjectStatus: string
     case Execution   = 'execution';
     case Paused      = 'paused';
     case Finished    = 'finished';
+    case Cancelled   = 'cancelled';
 
     public function label(): string
     {
@@ -16,9 +17,10 @@ enum ProjectStatus: string
             self::Execution   => 'En Ejecución',
             self::Paused      => 'Frenado',
             self::Finished    => 'Finalizado',
+            self::Cancelled   => 'Cancelado',
         };
     }
 }
 
 
-//testeo si todo esta bien 
+//testeo si todo esta bien

@@ -33,6 +33,7 @@ class Project extends Model
         'actual_end_date',
         'pause_reason',
         'paused_at',
+        'cancelled_at', 'cancelled_reason', 'cancelled_by',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class Project extends Model
         'actual_start_date' => 'date',
         'actual_end_date' => 'date',
         'paused_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     public function client()
@@ -106,5 +108,15 @@ class Project extends Model
     public function paymentFlow(): HasOne
     {
         return $this->hasOne(\App\Models\PaymentFlow::class)->latestOfMany();
+    }
+
+    public function amountHistories(): HasMany
+    {
+        return $this->hasMany(ProjectAmountHistory::class)->latest();
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 }

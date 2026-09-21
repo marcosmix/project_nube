@@ -4,8 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-        <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+         <link rel="icon" type="image/png" href="{{ asset('favicon-ligth.png') }}" media="(prefers-color-scheme: light)">
+         <link rel="icon" type="image/png" href="{{ asset('favicon-black.png') }}" media="(prefers-color-scheme: dark)">
+         <link rel="alternate icon" type="image/png" href="{{ asset('favicon-ligth.png') }}">
 
         <title>{{ config('app.name', 'NubeERP') }}</title>
 

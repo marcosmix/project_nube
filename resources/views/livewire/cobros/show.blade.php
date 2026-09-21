@@ -5,6 +5,33 @@
         eyebrow="Cobros"
     />
 
+    @if ($flow->status->value !== 'completed' && $flow->status->value !== 'cancelled')
+        <div class="flex justify-end">
+            <x-ui.button type="button" variant="danger" wire:click="openCancelFlowModal">Cancelar flujo</x-ui.button>
+        </div>
+    @endif
+
+    @if ($flow->status->value === 'cancelled')
+        <div class="rounded-2xl border border-slate-300 bg-slate-100 p-4 text-sm text-slate-700">
+            <strong>Flujo cancelado.</strong> {{ $flow->cancelled_reason }}
+            <span class="block mt-1 text-xs text-slate-500">{{ $flow->cancelled_at?->format('d/m/Y H:i') }} · {{ $flow->cancelledBy?->name ?? 'Sistema' }}</span>
+        </div>
+    @endif
+
+    @if ($flow->statusLogs->isNotEmpty())
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-sm font-semibold text-slate-900">Historial del flujo</h3>
+            <div class="mt-3 space-y-2">
+                @foreach ($flow->statusLogs as $log)
+                    <div class="text-xs text-slate-600">
+                        {{ $log->from_status ? str($log->from_status)->replace('_', ' ')->title() . ' → ' : '' }}{{ str($log->to_status)->replace('_', ' ')->title() }} · {{ $log->byUser?->name ?? 'Sistema' }} · {{ $log->changed_at?->format('d/m/Y H:i') }}
+                        @if ($log->reason) <span>· {{ $log->reason }}</span> @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
@@ -417,6 +444,21 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($isCancelFlowModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div class="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+                <h2 class="text-lg font-semibold text-slate-950">Cancelar flujo de cobro</h2>
+                <p class="mt-1 text-sm text-slate-500">Las cuotas pendientes dejarán de contabilizarse en los cobros globales.</p>
+                <x-ui.textarea class="mt-5" wire:model.defer="cancelFlowReason" rows="4" placeholder="Indica el motivo de cancelación"></x-ui.textarea>
+                @error('cancelFlowReason') <div class="mt-1 text-xs text-red-600">{{ $message }}</div> @enderror
+                <div class="mt-5 flex justify-end gap-3">
+                    <x-ui.button type="button" variant="secondary" wire:click="closeCancelFlowModal">Volver</x-ui.button>
+                    <x-ui.button type="button" variant="danger" wire:click="cancelFlow">Confirmar cancelación</x-ui.button>
                 </div>
             </div>
         </div>

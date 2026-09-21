@@ -3,6 +3,7 @@
 namespace App\Actions\Dashboard;
 
 use App\Enums\Cobros\PaymentStatus;
+use App\Enums\Cobros\PaymentFlowStatus;
 use App\Enums\ExecutionSubStatus;
 use App\Enums\ProjectStatus;
 use App\Enums\Sales\OpportunitySource;
@@ -34,6 +35,7 @@ class BuildDashboardDataAction
 
         $collectedAmount = (float) Payment::query()
             ->where('status', PaymentStatus::Posted->value)
+            ->whereHas('installment.flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
             ->whereBetween('paid_at', [$start, $end])
             ->sum('amount');
 
@@ -44,6 +46,7 @@ class BuildDashboardDataAction
             ->count();
         $previousCollectedAmount = (float) Payment::query()
             ->where('status', PaymentStatus::Posted->value)
+            ->whereHas('installment.flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
             ->whereBetween('paid_at', [$previousStart, $previousEnd])
             ->sum('amount');
         $previousExecutionProjects = Project::query()
@@ -58,6 +61,7 @@ class BuildDashboardDataAction
 
         $overdueInstallmentsCount = $this->basePendingInstallmentsQuery($today)->count();
         $upcomingInstallmentsCount = PaymentInstallment::query()
+            ->whereHas('flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
             ->where('due_date', '>=', $today->toDateString())
             ->where('due_date', '<=', $today->copy()->addDays(7)->toDateString())
             ->where('balance_due', '>', 0)
@@ -342,6 +346,7 @@ class BuildDashboardDataAction
         $series = $buckets->map(function (array $bucket) {
             $value = (float) Payment::query()
                 ->where('status', PaymentStatus::Posted->value)
+                ->whereHas('installment.flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
                 ->whereBetween('paid_at', [$bucket['start'], $bucket['end']])
                 ->sum('amount');
 
@@ -485,6 +490,7 @@ class BuildDashboardDataAction
     {
         return PaymentInstallment::query()
             ->with(['flow.project.client'])
+            ->whereHas('flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
             ->where('due_date', '>=', $today->toDateString())
             ->where('due_date', '<=', $today->copy()->addDays(7)->toDateString())
             ->where('balance_due', '>', 0)
@@ -564,6 +570,7 @@ class BuildDashboardDataAction
     protected function basePendingInstallmentsQuery(Carbon $today): Builder
     {
         return PaymentInstallment::query()
+            ->whereHas('flow', fn (Builder $query) => $query->where('status', '!=', PaymentFlowStatus::Cancelled->value))
             ->where('balance_due', '>', 0)
             ->whereDate('due_date', '<', $today);
     }
